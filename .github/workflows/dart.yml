@@ -26,7 +26,7 @@ jobs:
 
       - name: Update pods
         run: pod install --repo-update
-        working-directory: Coonch_ISO/ios
+        working-directory: ios
 
       - run: flutter build ios --release --no-codesign
 

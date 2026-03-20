@@ -1,0 +1,49 @@
+name: coonch
+description: A Flutter implementation of the Coonch app (scaffolded from Figma).
+publish_to: 'none'
+version: 1.0.0
+environment:
+  sdk: '>=2.17.0 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  provider: ^6.0.5
+  shared_preferences: ^2.0.15
+  http: ^0.13.6
+  flutter_svg: ^1.1.6
+  google_fonts: ^4.0.3
+  image_picker: ^0.8.7+4
+  video_player: ^2.8.6
+  video_thumbnail: ^0.5.0
+  path_provider: ^2.0.14
+  image: ^4.0.17
+  file_picker: ^10.3.7
+  audioplayers: ^6.5.1
+  record: ^6.1.2
+  app_links: ^2.0.2
+  qr_flutter: ^4.1.0
+  flutter_stripe: ^9.6.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/icons/app_icon.png
+  adaptive_icon_background: "#D8EBFF"
+  adaptive_icon_foreground: assets/icons/app_icon.png
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/icons/menu_icon.svg
+    - assets/fonts/
+    - assets/docs/

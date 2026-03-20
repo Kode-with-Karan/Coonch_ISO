@@ -1,0 +1,10 @@
+<svg width="200" height="120" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Top long bar -->
+  <rect x="10" y="15" width="140" height="25" rx="12.5" fill="#7DB7FF" />
+  <!-- Circle on right -->
+  <circle cx="170" cy="27.5" r="12.5" fill="#3E8CEB" />
+  <!-- Middle long bar -->
+  <rect x="10" y="55" width="140" height="25" rx="12.5" fill="#7DB7FF" />
+  <!-- Bottom short bar -->
+  <rect x="10" y="95" width="80" height="25" rx="12.5" fill="#7DB7FF" />
+</svg>

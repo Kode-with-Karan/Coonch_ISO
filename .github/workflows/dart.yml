@@ -13,7 +13,7 @@ jobs:
     runs-on: macos-latest
     defaults:
       run:
-        working-directory: flutter_app
+        working-directory: Coonch_ISO
     steps:
       - uses: actions/checkout@v4
 
@@ -26,7 +26,7 @@ jobs:
 
       - name: Update pods
         run: pod install --repo-update
-        working-directory: flutter_app/ios
+        working-directory: Coonch_ISO/ios
 
       - run: flutter build ios --release --no-codesign
 
@@ -41,7 +41,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: flutter_app/build/ios/iphoneos/FlutterIpaExport.ipa
+          file: Coonch_ISO/build/ios/iphoneos/FlutterIpaExport.ipa
           tag: ${{ github.event.inputs.tag }}
           overwrite: true
           body: "First release"

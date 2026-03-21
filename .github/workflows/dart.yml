@@ -11,24 +11,24 @@ on:
 jobs:
   build-ios:
     runs-on: macos-latest
-    defaults:
-      run:
-        working-directory: /
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-          architecture: x64
 
-      - run: flutter pub get
+      - name: Install dependencies
+        run: flutter pub get
 
-      - name: Update pods
-        run: pod install --repo-update
-        working-directory: ios
+      - name: Update CocoaPods
+        run: |
+          cd ios
+          pod install --repo-update
 
-      - run: flutter build ios --release --no-codesign
+      - name: Build iOS (no codesign)
+        run: flutter build ios --release --no-codesign
 
       - name: Package IPA
         run: |

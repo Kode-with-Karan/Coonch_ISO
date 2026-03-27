@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
@@ -56,6 +57,14 @@ class _SubscriptionPaymentProcessingScreenState
   stripe.CardFieldInputDetails? _cardDetails;
   String? _cardError;
 
+  bool get _supportsStripeCardField {
+    // flutter_stripe CardField is not safe on web/desktop for this app setup.
+    // Keep native card entry limited to mobile platforms.
+    if (kIsWeb) return false;
+    return defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -72,6 +81,17 @@ class _SubscriptionPaymentProcessingScreenState
 
   Future<void> _runPayment() async {
     if (_submitting) return;
+
+    if (!_supportsStripeCardField) {
+      _finish(
+        const SubscriptionPaymentProcessResult(
+          success: false,
+          message:
+              'Card payment is not supported on this platform yet. Please complete subscription purchase on Android or iOS.',
+        ),
+      );
+      return;
+    }
 
     final form = _formKey.currentState;
     if (form == null || !form.validate()) {
@@ -139,9 +159,7 @@ class _SubscriptionPaymentProcessingScreenState
               ? null
               : _addressLine2Controller.text.trim(),
           city: _cityController.text.trim(),
-          state: _stateController.text.trim().isEmpty
-              ? null
-              : _stateController.text.trim(),
+          state: _stateController.text.trim(),
           postalCode: _postalCodeController.text.trim(),
           country: _countryController.text.trim().toUpperCase(),
         ),
@@ -476,7 +494,9 @@ class _SubscriptionPaymentProcessingScreenState
                       child: TextFormField(
                         controller: _stateController,
                         textInputAction: TextInputAction.next,
-                        decoration: _inputDecoration('State (optional)'),
+                        decoration: _inputDecoration('State'),
+                        validator: (value) =>
+                            _requiredValidator(value, 'State'),
                       ),
                     ),
                   ],
@@ -518,25 +538,43 @@ class _SubscriptionPaymentProcessingScreenState
                 const SizedBox(height: 16),
                 _sectionTitle('Card details'),
                 const SizedBox(height: 10),
-                Container(
-                  width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: _cardError == null
-                          ? Colors.grey.shade300
-                          : Colors.red.shade300,
+                if (_supportsStripeCardField)
+                  Container(
+                    width: double.infinity,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: _cardError == null
+                            ? Colors.grey.shade300
+                            : Colors.red.shade300,
+                      ),
+                    ),
+                    child: stripe.CardField(
+                      enablePostalCode: false,
+                      dangerouslyGetFullCardDetails: false,
+                      onCardChanged: _handleCardChanged,
+                    ),
+                  )
+                else
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.orange.shade200),
+                    ),
+                    child: Text(
+                      'Card entry is not supported on this platform. Please use Android or iOS to buy this subscription.',
+                      style: TextStyle(
+                        color: Colors.orange.shade900,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                  child: stripe.CardField(
-                    enablePostalCode: false,
-                    dangerouslyGetFullCardDetails: false,
-                    onCardChanged: _handleCardChanged,
-                  ),
-                ),
                 if (_cardError != null) ...[
                   const SizedBox(height: 8),
                   Text(
@@ -579,7 +617,9 @@ class _SubscriptionPaymentProcessingScreenState
                   width: double.infinity,
                   height: 54,
                   child: ElevatedButton(
-                    onPressed: _submitting ? null : _runPayment,
+                    onPressed: (_submitting || !_supportsStripeCardField)
+                        ? null
+                        : _runPayment,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: topicColor,
                       shape: RoundedRectangleBorder(

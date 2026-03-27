@@ -296,8 +296,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         qp['type'] = label.toLowerCase();
       }
       final list = await api.getContents(queryParams: qp);
-      final deduped = _dedupeSeries(list);
-      if (mounted) setState(() => _contents = deduped);
+      // Keep one card per series only on the "All" tab.
+      // On filtered tabs (Video/Audio/Text), show each post item so counts
+      // and visible posts stay consistent with the selected type.
+      final items = _selectedFilter == 0 ? _dedupeSeries(list) : list;
+      if (mounted) setState(() => _contents = items);
     } catch (e) {
       if (mounted) {
         String message = 'Failed to load contents';
@@ -723,31 +726,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               ),
                                       ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            flex: 3,
-                            child: OutlinedButton(
-                              onPressed: _hasBlockedMe
-                                  ? null
-                                  : (_isBlockedByMe
-                                      ? _confirmUnblock
-                                      : _confirmBlock),
-                              style: OutlinedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12))),
-                              child: Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 14),
-                                  child: Text(
-                                      _isBlockedByMe
-                                          ? 'Unblock user'
-                                          : 'Block user',
-                                      style: TextStyle(
-                                          color: _isBlockedByMe
-                                              ? Colors.red
-                                              : Colors.black))),
+                          if (!_isBlockedByMe) ...[
+                            const SizedBox(width: 12),
+                            Expanded(
+                              flex: 3,
+                              child: OutlinedButton(
+                                onPressed: _hasBlockedMe
+                                    ? null
+                                    : (_isBlockedByMe
+                                        ? _confirmUnblock
+                                        : _confirmBlock),
+                                style: OutlinedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(12))),
+                                child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14),
+                                    child: Text(
+                                        _isBlockedByMe
+                                            ? 'Unblock user'
+                                            : 'Block user',
+                                        style: TextStyle(
+                                            color: _isBlockedByMe
+                                                ? Colors.red
+                                                : Colors.black))),
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ],
                     ),
@@ -887,6 +893,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: SizedBox.shrink(),
                 ),
               )
+            else if (!_loadingContents && _contents.isEmpty)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                  child: Center(
+                    child: Text(
+                      'No posts in this section.',
+                      style: TextStyle(color: Colors.black54, fontSize: 15),
+                    ),
+                  ),
+                ),
+              )
             else
               SliverList(
                 delegate: SliverChildBuilderDelegate(
@@ -901,8 +920,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     final content =
                         Map<String, dynamic>.from(_contents[i] as Map);
 
-                    // If this content belongs to a series, show a series card once.
-                    if (content['series'] is Map) {
+                    // If this content belongs to a series, show a single
+                    // series card only on the "All" tab.
+                    if (_selectedFilter == 0 && content['series'] is Map) {
                       final series =
                           Map<String, dynamic>.from(content['series'] as Map);
                       final seriesId =
@@ -977,7 +997,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       floatingActionButton: AppFAB(
         onPressed: () => PostOptions.show(
-          context, 
+          context,
           profileName: widget.name,
           onUploadSuccess: () {
             // Refresh content after successful upload

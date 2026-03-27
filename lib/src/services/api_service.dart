@@ -417,17 +417,20 @@ class ApiService {
   }
 
   /// Update password
-  Future<Map<String, dynamic>> updatePassword(String newPassword) async {
+  Future<Map<String, dynamic>> updatePassword(
+      String currentPassword, String newPassword) async {
     final res = await http.patch(_resolveUri('api/v1/user/update-password/'),
         headers: _defaultHeaders(),
-        body: jsonEncode({'password': newPassword}));
+        body: jsonEncode({
+          'current_password': currentPassword,
+          'new_password': newPassword,
+        }));
     return _process(res);
   }
 
   /// Request a forgot-password OTP (email-based).
   Future<Map<String, dynamic>> requestPasswordReset(String email) async {
-    return await postJson(
-        'api/v1/user/forgot-password/', {'identifier': email});
+    return await postJson('api/v1/user/forgot-password/', {'email': email});
   }
 
   /// Confirm forgot-password using email + otp to set a new password.
@@ -674,12 +677,36 @@ class ApiService {
         'api/v1/content/$contentId/comment/', {'comment_text': comment});
   }
 
+  /// Report content for moderation review.
+  Future<Map<String, dynamic>> reportContent(
+    String contentId, {
+    required String reason,
+    String? details,
+  }) async {
+    final payload = <String, dynamic>{'reason': reason};
+    if (details != null && details.trim().isNotEmpty) {
+      payload['details'] = details.trim();
+    }
+    return await postJson('api/v1/content/$contentId/report/', payload);
+  }
+
   /// Delete a comment
   Future<Map<String, dynamic>> deleteComment(
       String contentId, String commentId) async {
     final res = await http.delete(
         _resolveUri('api/v1/content/$contentId/comment/$commentId/'),
         headers: _defaultHeaders());
+    return _process(res);
+  }
+
+  /// Edit a comment's text.
+  Future<Map<String, dynamic>> updateComment(
+      String contentId, String commentId, String comment) async {
+    final res = await http.patch(
+      _resolveUri('api/v1/content/$contentId/comment/$commentId/'),
+      headers: _defaultHeaders(),
+      body: jsonEncode({'comment_text': comment}),
+    );
     return _process(res);
   }
 

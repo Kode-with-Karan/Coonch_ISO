@@ -204,11 +204,12 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Change password
-  Future<Map<String, dynamic>> updatePassword(String newPassword) async {
+  Future<Map<String, dynamic>> updatePassword(
+      String currentPassword, String newPassword) async {
     _loading = true;
     notifyListeners();
     try {
-      final res = await api.updatePassword(newPassword);
+      final res = await api.updatePassword(currentPassword, newPassword);
       return res;
     } finally {
       _loading = false;

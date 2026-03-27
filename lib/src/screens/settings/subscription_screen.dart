@@ -749,7 +749,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               _openCheckout(plan, topic);
             },
             style: ElevatedButton.styleFrom(
-                backgroundColor: topic['color'] as Color),
+              backgroundColor: topic['color'] as Color,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Confirm'),
           ),
         ],

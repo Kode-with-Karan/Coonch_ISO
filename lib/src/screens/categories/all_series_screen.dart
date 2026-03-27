@@ -16,6 +16,14 @@ class _AllSeriesScreenState extends State<AllSeriesScreen> {
   bool _loading = true;
   String? _error;
 
+  void _pushPage(Widget page) {
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -32,7 +40,8 @@ class _AllSeriesScreenState extends State<AllSeriesScreen> {
     });
     try {
       final api = Provider.of<ApiService>(context, listen: false);
-      final seriesList = await api.getSeries(queryParams: {'topic': 'education'});
+      final seriesList =
+          await api.getSeries(queryParams: {'topic': 'education'});
       if (!mounted) return;
       setState(() {
         _series = seriesList;
@@ -76,7 +85,8 @@ class _AllSeriesScreenState extends State<AllSeriesScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(_error!, style: const TextStyle(color: Colors.red)),
+                        Text(_error!,
+                            style: const TextStyle(color: Colors.red)),
                         const SizedBox(height: 8),
                         TextButton(
                           onPressed: _loadSeries,
@@ -112,15 +122,11 @@ class _AllSeriesScreenState extends State<AllSeriesScreen> {
     return GestureDetector(
       onTap: () {
         if (seriesId.isEmpty) return;
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => SeriesDetailScreen(
-              seriesId: seriesId,
-              initialTitle: title,
-              accentColor: AppTheme.primary,
-            ),
-          ),
-        );
+        _pushPage(SeriesDetailScreen(
+          seriesId: seriesId,
+          initialTitle: title,
+          accentColor: AppTheme.primary,
+        ));
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),

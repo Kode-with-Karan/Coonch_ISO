@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'package:flutter/services.dart';
 
@@ -248,7 +249,7 @@ class _SignUpStep2State extends State<SignUpStep2> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
@@ -260,293 +261,311 @@ class _SignUpStep2State extends State<SignUpStep2> {
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.fromLTRB(
               20, 0, 20, bottomInset > 0 ? bottomInset + 16 : 24),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const SizedBox(height: 8),
-            const Text('Almost There',
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 8),
-            const Text(
-                "Let's add some additional details to complete your profile.",
-                style: TextStyle(color: Colors.grey)),
-            const SizedBox(height: 18),
-            Center(
-              child: Column(children: [
-                GestureDetector(
-                  onTap: () => _showPhotoOptions(),
-                  child: CircleAvatar(
-                      radius: 44,
-                      backgroundColor: Colors.grey.shade100,
-                      backgroundImage: _avatarFile != null
-                          ? FileImage(_avatarFile!) as ImageProvider
-                          : (_selectedAvatarUrl != null
-                              ? NetworkImage(_selectedAvatarUrl!)
-                              : null),
-                      child: _avatarFile == null && _selectedAvatarUrl == null
-                          ? const Icon(Icons.camera_alt,
-                              color: Colors.lightBlue)
-                          : null),
-                ),
-                const SizedBox(height: 12),
-                TextButton(
-                    onPressed: () => _showPhotoOptions(),
-                    child: const Text('Change profile photo',
-                        style: TextStyle(color: Colors.lightBlue))),
-                const SizedBox(height: 12),
-                Wrap(
-                    spacing: 12,
-                    children: List.generate(4, (i) {
-                      final idx = i + 1;
-                      final url = 'https://i.pravatar.cc/150?img=$idx';
-                      final selected = _selectedAvatarUrl == url;
-                      return GestureDetector(
-                        onTap: () => setState(() {
-                          _selectedAvatarUrl = url;
-                          _avatarFile = null;
-                        }),
-                        child: CircleAvatar(
-                          radius: 24,
-                          backgroundColor: selected
-                              ? Colors.lightBlue.shade50
-                              : Colors.grey.shade100,
-                          backgroundImage: NetworkImage(url),
+          child: Center(
+            child: ConstrainedBox(
+              constraints:
+                  BoxConstraints(maxWidth: kIsWeb ? 560 : double.infinity),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    const Text('Almost There',
+                        style: TextStyle(
+                            fontSize: 30, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 8),
+                    const Text(
+                        "Let's add some additional details to complete your profile.",
+                        style: TextStyle(color: Colors.grey)),
+                    const SizedBox(height: 18),
+                    Center(
+                      child: Column(children: [
+                        GestureDetector(
+                          onTap: () => _showPhotoOptions(),
+                          child: CircleAvatar(
+                              radius: 44,
+                              backgroundColor: Colors.grey.shade100,
+                              backgroundImage: _avatarFile != null
+                                  ? FileImage(_avatarFile!) as ImageProvider
+                                  : (_selectedAvatarUrl != null
+                                      ? NetworkImage(_selectedAvatarUrl!)
+                                      : null),
+                              child: _avatarFile == null &&
+                                      _selectedAvatarUrl == null
+                                  ? const Icon(Icons.camera_alt,
+                                      color: Colors.lightBlue)
+                                  : null),
                         ),
-                      );
-                    }).toList()),
-                const SizedBox(height: 8),
-              ]),
-            ),
-            const SizedBox(height: 22),
-            const Text('Or Select Profile Photo', textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            _buildInput(
-                label: 'Name',
-                hint: 'Enter your name',
-                controller: _nameController,
-                errorText: _nameError,
-                onChanged: (_) {
-                  if (_nameError != null) {
-                    setState(() => _nameError = null);
-                  }
-                }),
-            const SizedBox(height: 12),
-            _buildInput(
-                label: 'Ph. Number (e.g. +919876543210)',
-                hint: 'Ph. Number with country code ',
-                controller: _phoneController,
-                errorText: _phoneError,
-                hintMaxLines: 2,
-                keyboardType: TextInputType.phone,
-                onChanged: (_) {
-                  if (_phoneError != null) {
-                    setState(() => _phoneError = null);
-                  }
-                },
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9+]')),
-                  LengthLimitingTextInputFormatter(16)
-                ]),
-            const SizedBox(height: 12),
-            _buildInput(
-                label: 'Verification Code',
-                hint: 'Enter the verification code sent to your email',
-                controller: _otpController,
-                errorText: _otpError,
-                hintMaxLines: 2,
-                keyboardType: TextInputType.number,
-                onChanged: (_) {
-                  if (_otpError != null) {
-                    setState(() => _otpError = null);
-                  }
-                },
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(6)
-                ]),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                  onPressed: () async {
-                    final notifications = Provider.of<NotificationService>(
-                        context,
-                        listen: false);
-                    showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (_) =>
-                            const Center(child: CircularProgressIndicator()));
-                    try {
-                      final auth =
-                          Provider.of<AuthProvider>(context, listen: false);
-                      final res = await auth.api
-                          .requestRegistrationOtp(widget.email.trim());
-                      Navigator.of(context).pop();
-                      if (res['success'] == 1) {
-                        notifications.showSuccess(
-                            'Verification code resent to ${widget.email.trim()}.');
-                      } else {
-                        notifications.showError(
-                            NotificationService.formatMessage(
-                                res['message'] ?? 'Could not resend code'));
-                      }
-                    } catch (e) {
-                      Navigator.of(context).pop();
-                      notifications
-                          .showError(NotificationService.formatMessage(e));
-                    }
-                  },
-                  child: const Text('Resend code')),
-            ),
-            const SizedBox(height: 28),
-            SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.lightBlue.shade200,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12))),
-                    onPressed: () async {
-                      final name = _nameController.text.trim();
-                      final phone = _phoneController.text.trim();
-                      final otp = _otpController.text.trim();
-                      final email = widget.email.trim();
-                      final password = widget.password;
-                      final notifications = Provider.of<NotificationService>(
-                          context,
-                          listen: false);
-
-                      if (email.isEmpty || password.trim().isEmpty) {
-                        notifications.showError(
-                            'Signup session is incomplete. Please go back and enter email and password again.');
-                        return;
-                      }
-
-                      if (!_validateForm()) {
-                        notifications.showWarning(
-                            'Please correct the highlighted fields');
-                        return;
-                      }
-
-                      showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (_) =>
-                              const Center(child: CircularProgressIndicator()));
-
-                      try {
-                        final auth =
-                            Provider.of<AuthProvider>(context, listen: false);
-                        final res = await auth.register(
-                            username: name,
-                            email: email,
-                            password: password,
-                            otp: otp,
-                            phone: phone);
-
-                        Navigator.of(context).pop();
-
-                        if (res['success'] == 1) {
-                          // Save phone -> username mapping locally so users can
-                          // later login with their phone number.
-                          try {
-                            final prefs = await SharedPreferences.getInstance();
-                            await prefs.setString(
-                                'phone_to_username:$phone', name);
-                          } catch (_) {}
-
-                          // If the user picked a file avatar, upload it now.
-                          try {
-                            if (_avatarFile != null) {
-                              await auth.updateProfile({'phone': phone},
-                                  avatar: _avatarFile);
-                            } else if (_selectedAvatarUrl != null) {
-                              // Download the selected avatar URL and upload as file
-                              final downloaded = await _downloadAvatarToFile(
-                                  _selectedAvatarUrl!);
-                              if (downloaded != null) {
-                                await auth.updateProfile({'phone': phone},
-                                    avatar: downloaded);
-                                try {
-                                  // delete temp file after upload
-                                  await downloaded.delete();
-                                } catch (_) {}
+                        const SizedBox(height: 12),
+                        TextButton(
+                            onPressed: () => _showPhotoOptions(),
+                            child: const Text('Change profile photo',
+                                style: TextStyle(color: Colors.lightBlue))),
+                        const SizedBox(height: 12),
+                        Wrap(
+                            spacing: 12,
+                            children: List.generate(4, (i) {
+                              final idx = i + 1;
+                              final url = 'https://i.pravatar.cc/150?img=$idx';
+                              final selected = _selectedAvatarUrl == url;
+                              return GestureDetector(
+                                onTap: () => setState(() {
+                                  _selectedAvatarUrl = url;
+                                  _avatarFile = null;
+                                }),
+                                child: CircleAvatar(
+                                  radius: 24,
+                                  backgroundColor: selected
+                                      ? Colors.lightBlue.shade50
+                                      : Colors.grey.shade100,
+                                  backgroundImage: NetworkImage(url),
+                                ),
+                              );
+                            }).toList()),
+                        const SizedBox(height: 8),
+                      ]),
+                    ),
+                    const SizedBox(height: 22),
+                    const Text('Or Select Profile Photo',
+                        textAlign: TextAlign.center),
+                    const SizedBox(height: 12),
+                    _buildInput(
+                        label: 'Name',
+                        hint: 'Enter your name',
+                        controller: _nameController,
+                        errorText: _nameError,
+                        onChanged: (_) {
+                          if (_nameError != null) {
+                            setState(() => _nameError = null);
+                          }
+                        }),
+                    const SizedBox(height: 12),
+                    _buildInput(
+                        label: 'Ph. Number (e.g. +919876543210)',
+                        hint: 'Ph. Number with country code ',
+                        controller: _phoneController,
+                        errorText: _phoneError,
+                        hintMaxLines: 2,
+                        keyboardType: TextInputType.phone,
+                        onChanged: (_) {
+                          if (_phoneError != null) {
+                            setState(() => _phoneError = null);
+                          }
+                        },
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9+]')),
+                          LengthLimitingTextInputFormatter(16)
+                        ]),
+                    const SizedBox(height: 12),
+                    _buildInput(
+                        label: 'Verification Code',
+                        hint: 'Enter the verification code sent to your email',
+                        controller: _otpController,
+                        errorText: _otpError,
+                        hintMaxLines: 2,
+                        keyboardType: TextInputType.number,
+                        onChanged: (_) {
+                          if (_otpError != null) {
+                            setState(() => _otpError = null);
+                          }
+                        },
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(6)
+                        ]),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                          onPressed: () async {
+                            final notifications =
+                                Provider.of<NotificationService>(context,
+                                    listen: false);
+                            showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (_) => const Center(
+                                    child: CircularProgressIndicator()));
+                            try {
+                              final auth = Provider.of<AuthProvider>(context,
+                                  listen: false);
+                              final res = await auth.api
+                                  .requestRegistrationOtp(widget.email.trim());
+                              Navigator.of(context).pop();
+                              if (res['success'] == 1) {
+                                notifications.showSuccess(
+                                    'Verification code resent to ${widget.email.trim()}.');
                               } else {
-                                // Fallback: try setting avatar by URL field
-                                await auth.updateProfile(
-                                    {'avatar': _selectedAvatarUrl});
+                                notifications.showError(
+                                    NotificationService.formatMessage(
+                                        res['message'] ??
+                                            'Could not resend code'));
                               }
+                            } catch (e) {
+                              Navigator.of(context).pop();
+                              notifications.showError(
+                                  NotificationService.formatMessage(e));
                             }
-                          } catch (_) {}
+                          },
+                          child: const Text('Resend code')),
+                    ),
+                    const SizedBox(height: 28),
+                    SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.lightBlue.shade200,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12))),
+                            onPressed: () async {
+                              final name = _nameController.text.trim();
+                              final phone = _phoneController.text.trim();
+                              final otp = _otpController.text.trim();
+                              final email = widget.email.trim();
+                              final password = widget.password;
+                              final notifications =
+                                  Provider.of<NotificationService>(context,
+                                      listen: false);
 
-                          Navigator.of(context)
-                              .pushReplacementNamed('/signup/3');
-                          return;
-                        }
+                              if (email.isEmpty || password.trim().isEmpty) {
+                                notifications.showError(
+                                    'Signup session is incomplete. Please go back and enter email and password again.');
+                                return;
+                              }
 
-                        final backendNameError = _extractFieldErrorFromPayload(
-                                res, 'username') ??
-                            _extractFieldErrorFromPayload(res, 'name') ??
-                            _extractFieldErrorFromPayload(res, 'first_name');
-                        final backendPhoneError =
-                            _extractFieldErrorFromPayload(res, 'phone');
-                        final backendOtpError =
-                            _extractFieldErrorFromPayload(res, 'otp') ??
-                                _extractFieldErrorFromPayload(
-                                    res, 'verification_code');
-                        final backendEmailError =
-                            _extractFieldErrorFromPayload(res, 'email');
-                        final backendPasswordError =
-                            _extractFieldErrorFromPayload(res, 'password');
+                              if (!_validateForm()) {
+                                notifications.showWarning(
+                                    'Please correct the highlighted fields');
+                                return;
+                              }
 
-                        var hasFieldErrors = false;
-                        setState(() {
-                          if (backendNameError != null &&
-                              backendNameError.isNotEmpty) {
-                            _nameError = backendNameError;
-                            hasFieldErrors = true;
-                          }
-                          if (backendPhoneError != null &&
-                              backendPhoneError.isNotEmpty) {
-                            _phoneError = backendPhoneError;
-                            hasFieldErrors = true;
-                          }
-                          if (backendOtpError != null &&
-                              backendOtpError.isNotEmpty) {
-                            _otpError = backendOtpError;
-                            hasFieldErrors = true;
-                          }
-                        });
+                              showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (_) => const Center(
+                                      child: CircularProgressIndicator()));
 
-                        if ((backendEmailError != null &&
-                                backendEmailError.isNotEmpty) ||
-                            (backendPasswordError != null &&
-                                backendPasswordError.isNotEmpty)) {
-                          notifications.showError(
-                              'Signup details from Step 1 are missing or invalid. Please go back and complete Step 1 again.');
-                          return;
-                        }
+                              try {
+                                final auth = Provider.of<AuthProvider>(context,
+                                    listen: false);
+                                final res = await auth.register(
+                                    username: name,
+                                    email: email,
+                                    password: password,
+                                    otp: otp,
+                                    phone: phone);
 
-                        if (hasFieldErrors) {
-                          notifications.showWarning(
-                              'Please correct the highlighted fields');
-                          return;
-                        }
+                                Navigator.of(context).pop();
 
-                        final fallbackText = NotificationService.formatMessage(
-                            res['message'] ??
-                                res['data'] ??
-                                'Registration failed');
-                        notifications.showError(fallbackText);
-                      } catch (e) {
-                        Navigator.of(context).pop();
-                        notifications
-                            .showError(NotificationService.formatMessage(e));
-                      }
-                    },
-                    child: const Text('Next'))),
-            const SizedBox(height: 12),
-          ]),
+                                if (res['success'] == 1) {
+                                  // Save phone -> username mapping locally so users can
+                                  // later login with their phone number.
+                                  try {
+                                    final prefs =
+                                        await SharedPreferences.getInstance();
+                                    await prefs.setString(
+                                        'phone_to_username:$phone', name);
+                                  } catch (_) {}
+
+                                  // If the user picked a file avatar, upload it now.
+                                  try {
+                                    if (_avatarFile != null) {
+                                      await auth.updateProfile({'phone': phone},
+                                          avatar: _avatarFile);
+                                    } else if (_selectedAvatarUrl != null) {
+                                      // Download the selected avatar URL and upload as file
+                                      final downloaded =
+                                          await _downloadAvatarToFile(
+                                              _selectedAvatarUrl!);
+                                      if (downloaded != null) {
+                                        await auth.updateProfile(
+                                            {'phone': phone},
+                                            avatar: downloaded);
+                                        try {
+                                          // delete temp file after upload
+                                          await downloaded.delete();
+                                        } catch (_) {}
+                                      } else {
+                                        // Fallback: try setting avatar by URL field
+                                        await auth.updateProfile(
+                                            {'avatar': _selectedAvatarUrl});
+                                      }
+                                    }
+                                  } catch (_) {}
+
+                                  Navigator.of(context)
+                                      .pushReplacementNamed('/signup/3');
+                                  return;
+                                }
+
+                                final backendNameError =
+                                    _extractFieldErrorFromPayload(res, 'username') ??
+                                        _extractFieldErrorFromPayload(
+                                            res, 'name') ??
+                                        _extractFieldErrorFromPayload(
+                                            res, 'first_name');
+                                final backendPhoneError =
+                                    _extractFieldErrorFromPayload(res, 'phone');
+                                final backendOtpError =
+                                    _extractFieldErrorFromPayload(res, 'otp') ??
+                                        _extractFieldErrorFromPayload(
+                                            res, 'verification_code');
+                                final backendEmailError =
+                                    _extractFieldErrorFromPayload(res, 'email');
+                                final backendPasswordError =
+                                    _extractFieldErrorFromPayload(
+                                        res, 'password');
+
+                                var hasFieldErrors = false;
+                                setState(() {
+                                  if (backendNameError != null &&
+                                      backendNameError.isNotEmpty) {
+                                    _nameError = backendNameError;
+                                    hasFieldErrors = true;
+                                  }
+                                  if (backendPhoneError != null &&
+                                      backendPhoneError.isNotEmpty) {
+                                    _phoneError = backendPhoneError;
+                                    hasFieldErrors = true;
+                                  }
+                                  if (backendOtpError != null &&
+                                      backendOtpError.isNotEmpty) {
+                                    _otpError = backendOtpError;
+                                    hasFieldErrors = true;
+                                  }
+                                });
+
+                                if ((backendEmailError != null &&
+                                        backendEmailError.isNotEmpty) ||
+                                    (backendPasswordError != null &&
+                                        backendPasswordError.isNotEmpty)) {
+                                  notifications.showError(
+                                      'Signup details from Step 1 are missing or invalid. Please go back and complete Step 1 again.');
+                                  return;
+                                }
+
+                                if (hasFieldErrors) {
+                                  notifications.showWarning(
+                                      'Please correct the highlighted fields');
+                                  return;
+                                }
+
+                                final fallbackText =
+                                    NotificationService.formatMessage(
+                                        res['message'] ??
+                                            res['data'] ??
+                                            'Registration failed');
+                                notifications.showError(fallbackText);
+                              } catch (e) {
+                                Navigator.of(context).pop();
+                                notifications.showError(
+                                    NotificationService.formatMessage(e));
+                              }
+                            },
+                            child: const Text('Next'))),
+                    const SizedBox(height: 12),
+                  ]),
+            ),
+          ),
         ),
       ),
     );
@@ -587,8 +606,8 @@ class _SignUpStep2State extends State<SignUpStep2> {
                   hintText: hint,
                   hintMaxLines: hintMaxLines,
                   hintStyle: const TextStyle(
-                    color: Colors.black45,
-                    fontWeight: FontWeight.w400,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w500,
                   ),
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 )),

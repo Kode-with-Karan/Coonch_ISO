@@ -22,6 +22,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _requesting = false;
   bool _submitting = false;
 
+  final RegExp _emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+
   static const List<String> _commonPasswords = [
     'password',
     '123456',
@@ -47,17 +49,21 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     final notifications =
         Provider.of<NotificationService>(context, listen: false);
     final api = Provider.of<ApiService>(context, listen: false);
-    final identifier = _identifierController.text.trim();
+    final email = _identifierController.text.trim();
 
-    if (identifier.isEmpty) {
-      notifications.showWarning('Please enter your email or username');
+    if (email.isEmpty) {
+      notifications.showWarning('Please enter your registered email address');
+      return;
+    }
+    if (!_emailRegex.hasMatch(email)) {
+      notifications.showWarning('Please enter a valid email address');
       return;
     }
     if (_requesting) return;
 
     setState(() => _requesting = true);
     try {
-      final res = await api.requestPasswordReset(identifier);
+      final res = await api.requestPasswordReset(email);
       final data = res['data'] as Map<String, dynamic>?;
       final otp = data != null ? data['otp']?.toString() : null;
       if (otp != null) {
@@ -86,6 +92,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         password.isEmpty ||
         confirm.isEmpty) {
       notifications.showWarning('Please fill all fields');
+      return;
+    }
+    if (!_emailRegex.hasMatch(email)) {
+      notifications.showError('Please enter a valid registered email address');
       return;
     }
     if (password != confirm) {
@@ -127,7 +137,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -152,8 +162,18 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             const SizedBox(height: 20),
             TextField(
               controller: _identifierController,
+              keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
-                labelText: 'Email or Username',
+                labelText: 'Registered Email',
+                hintText: 'name@example.com',
+                labelStyle: const TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w600,
+                ),
+                hintStyle: const TextStyle(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w500,
+                ),
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding:
@@ -190,6 +210,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               controller: _otpController,
               decoration: InputDecoration(
                 labelText: 'Reset code',
+                hintText: '6-digit code',
+                labelStyle: const TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w600,
+                ),
+                hintStyle: const TextStyle(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w500,
+                ),
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding:
@@ -208,6 +237,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               obscureText: _obscure,
               decoration: InputDecoration(
                 labelText: 'New Password',
+                hintText: 'Enter new password',
+                labelStyle: const TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w600,
+                ),
+                hintStyle: const TextStyle(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w500,
+                ),
                 filled: true,
                 fillColor: Colors.white,
                 suffixIcon: IconButton(
@@ -233,6 +271,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               obscureText: _obscure,
               decoration: InputDecoration(
                 labelText: 'Confirm Password',
+                hintText: 'Re-enter password',
+                labelStyle: const TextStyle(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w600,
+                ),
+                hintStyle: const TextStyle(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w500,
+                ),
                 filled: true,
                 fillColor: Colors.white,
                 suffixIcon: IconButton(

@@ -129,6 +129,24 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
       }
       notifications.showSuccess('Story posted');
       if (!mounted) return;
+
+      // The create endpoint may return only metadata (content_id/status).
+      // Fetch the created item so home/story UI gets file_url + user payload.
+      try {
+        final data = (res['data'] is Map) ? res['data'] as Map : res;
+        final createdId =
+            (data['content_id'] ?? data['id'] ?? data['pk'])?.toString();
+        if (createdId != null && createdId.isNotEmpty) {
+          final fresh = await api.getContentById(createdId);
+          if (mounted) {
+            Navigator.of(context).pop({'data': fresh});
+            return;
+          }
+        }
+      } catch (_) {
+        // Fallback to original response shape below.
+      }
+
       Navigator.of(context).pop(res);
     } catch (e) {
       notifications.showError(

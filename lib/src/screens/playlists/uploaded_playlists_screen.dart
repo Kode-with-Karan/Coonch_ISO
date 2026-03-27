@@ -196,17 +196,26 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
                                         ],
                                       ),
                                       const SizedBox(height: 8),
-                                      Text(
-                                        (item['description'] ?? '').toString(),
-                                        style:
-                                            TextStyle(color: Colors.grey[600]),
-                                        maxLines: 3,
-                                        overflow: TextOverflow.ellipsis,
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(right: 12),
+                                        child: Text(
+                                          (item['description'] ?? '')
+                                              .toString(),
+                                          style: TextStyle(
+                                              color: Colors.grey[600]),
+                                          maxLines: 3,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
                                       const SizedBox(height: 6),
-                                      Text('See more',
-                                          style: TextStyle(
-                                              color: Colors.lightBlue[700])),
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(right: 12),
+                                        child: Text('See more',
+                                            style: TextStyle(
+                                                color: Colors.lightBlue[700])),
+                                      ),
                                     ],
                                   ),
                                 ),

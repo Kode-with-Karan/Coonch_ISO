@@ -4,6 +4,7 @@ import '../profile/profile_screen.dart';
 import '../../services/api_service.dart';
 import '../../widgets/network_avatar.dart';
 import '../../services/notification_service.dart';
+import '../../providers/auth_provider.dart';
 
 /// StoryViewer now supports a list of stories and auto-advancing progress bars.
 class StoryViewer extends StatefulWidget {
@@ -42,7 +43,7 @@ class _StoryViewerState extends State<StoryViewer>
     _index = widget.initialStoryIndex.clamp(0, currentGroup.length - 1);
     _controller =
         AnimationController(vsync: this, duration: _getDurationForCurrent());
-    
+
     // Don't start animation yet - wait for content to load
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
@@ -62,19 +63,19 @@ class _StoryViewerState extends State<StoryViewer>
   void _loadCurrentStory() async {
     setState(() => _isLoading = true);
     _controller.reset();
-    
+
     // Wait for widget to build and content to be ready
     await Future.delayed(const Duration(milliseconds: 300));
-    
+
     if (mounted) {
       final story = widget.groups[_groupIndex][_index];
       setState(() {
         _isLiked = story['is_liked_by_me'] == true;
       });
-      
+
       // Register view
       _registerViewForIndex(_groupIndex, _index);
-      
+
       // Start animation after content is loaded
       setState(() => _isLoading = false);
       _controller.duration = _getDurationForCurrent();
@@ -180,14 +181,41 @@ class _StoryViewerState extends State<StoryViewer>
     final story = widget.groups[_groupIndex][_index];
     final id = story['id']?.toString();
     if (id == null) return;
-    setState(() => _isLiked = !_isLiked);
+    final bool previousLiked = _isLiked;
+    final int previousCount = _readLikesCount(story);
+    final bool nextLiked = !previousLiked;
+
+    // Optimistic local update so the footer count reacts immediately.
+    setState(() {
+      _isLiked = nextLiked;
+      story['is_liked_by_me'] = nextLiked;
+      final int nextCount = nextLiked
+          ? previousCount + 1
+          : (previousCount > 0 ? previousCount - 1 : 0);
+      story['likes_count'] = nextCount;
+      story['likes'] = nextCount;
+    });
+
     try {
       await api.likeUnlikeContent(id);
     } catch (e) {
-      setState(() => _isLiked = !_isLiked);
+      // Roll back optimistic update on failure.
+      setState(() {
+        _isLiked = previousLiked;
+        story['is_liked_by_me'] = previousLiked;
+        story['likes_count'] = previousCount;
+        story['likes'] = previousCount;
+      });
       notifications
           .showError(NotificationService.formatMessage('Failed to react: $e'));
     }
+  }
+
+  int _readLikesCount(Map<String, dynamic> story) {
+    final dynamic raw = story['likes_count'] ?? story['likes'] ?? 0;
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    return int.tryParse(raw.toString()) ?? 0;
   }
 
   @override
@@ -215,6 +243,119 @@ class _StoryViewerState extends State<StoryViewer>
     }
   }
 
+  String? _extractUserId(dynamic userOrMap) {
+    try {
+      if (userOrMap == null) return null;
+      if (userOrMap is Map) {
+        final id = userOrMap['id'] ?? userOrMap['user_id'] ?? userOrMap['pk'];
+        return id?.toString();
+      }
+      return userOrMap.toString();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _deleteCurrentStory() async {
+    final story = widget.groups[_groupIndex][_index];
+    final id = story['id']?.toString();
+    if (id == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: const Text('Delete story'),
+        content: const Text('Are you sure you want to delete this story?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(d).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(d).pop(true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    final api = Provider.of<ApiService>(context, listen: false);
+    final notifications =
+        Provider.of<NotificationService>(context, listen: false);
+
+    try {
+      await api.deleteContent(id);
+
+      setState(() {
+        widget.groups[_groupIndex].removeAt(_index);
+
+        if (widget.groups[_groupIndex].isEmpty) {
+          widget.groups.removeAt(_groupIndex);
+          if (widget.groups.isNotEmpty) {
+            if (_groupIndex >= widget.groups.length) {
+              _groupIndex = widget.groups.length - 1;
+            }
+            _index = 0;
+          }
+        } else if (_index >= widget.groups[_groupIndex].length) {
+          _index = widget.groups[_groupIndex].length - 1;
+        }
+      });
+
+      if (widget.groups.isEmpty) {
+        if (mounted) Navigator.of(context).pop(true);
+        return;
+      }
+
+      notifications.showSuccess('Story deleted successfully');
+      _loadCurrentStory();
+    } catch (e) {
+      notifications.showError(
+          NotificationService.formatMessage('Failed to delete story: $e'));
+    }
+  }
+
+  String _resolveStoryOwnerName(
+      Map<String, dynamic> data, Map<String, dynamic>? user) {
+    try {
+      if (user != null) {
+        final firstName =
+            (user['first_name'] ?? user['firstName'] ?? '').toString().trim();
+        final lastName =
+            (user['last_name'] ?? user['lastName'] ?? '').toString().trim();
+        final fullFromParts = '$firstName $lastName'.trim();
+
+        final candidates = [
+          user['username'],
+          user['name'],
+          user['full_name'],
+          fullFromParts.isNotEmpty ? fullFromParts : null,
+          user['email'],
+        ];
+        for (final value in candidates) {
+          final text = value?.toString().trim() ?? '';
+          if (text.isNotEmpty) return text;
+        }
+      }
+
+      final rootCandidates = [
+        data['username'],
+        data['name'],
+        data['full_name'],
+        data['user_name'],
+      ];
+      for (final value in rootCandidates) {
+        final text = value?.toString().trim() ?? '';
+        if (text.isNotEmpty) return text;
+      }
+    } catch (_) {
+      // ignore and fallback
+    }
+    return 'User';
+  }
+
   @override
   Widget build(BuildContext context) {
     final data = widget.groups[_groupIndex][_index];
@@ -223,12 +364,13 @@ class _StoryViewerState extends State<StoryViewer>
     final avatar = user != null
         ? (user['avatar'] ?? user['avatar_url'])?.toString()
         : null;
-    final name = user != null
-        ? (user['username'] ?? user['name'])?.toString()
-        : (data['user']?.toString());
+    final name = _resolveStoryOwnerName(data, user);
     final uid = user != null
         ? (user['id'] ?? user['user_id'] ?? user['pk'])?.toString()
         : null;
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final myId = _extractUserId(auth.user);
+    final isOwner = myId != null && uid != null && myId == uid;
     final image = data['thumbnail_url'] ?? data['file_url'] ?? data['file'];
 
     return Scaffold(
@@ -237,191 +379,204 @@ class _StoryViewerState extends State<StoryViewer>
         child: Stack(
           children: [
             Column(
-          children: [
-            // progress bars
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
-              child: Row(
-                children: List.generate(widget.groups[_groupIndex].length, (i) {
-                  return Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                      child: _isLoading
-                          ? const LinearProgressIndicator(
-                              value: null,
-                              backgroundColor: Colors.white24,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            )
-                          : LinearProgressIndicator(
-                              value: i < _index
-                                  ? 1
-                                  : (i == _index ? _controller.value : 0),
-                              backgroundColor: Colors.white24,
-                              valueColor:
-                                  const AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-            // header row
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      if (uid != null) {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (_) => ProfileScreen(userId: uid)));
-                      }
-                    },
-                    child: NetworkAvatar(url: avatar, radius: 20),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        if (uid != null) {
-                          Navigator.of(context).push(MaterialPageRoute(
-                              builder: (_) => ProfileScreen(userId: uid)));
-                        }
-                      },
-                      child: Text(name ?? 'Unknown',
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  if ((data['views_count'] ?? data['views']) != null)
-                    Padding(
-                        padding: const EdgeInsets.only(right: 12.0),
-                        child: Text(
-                            '${(data['views_count'] ?? data['views']).toString()} views',
-                            style: const TextStyle(color: Colors.white70))),
-                  IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close, color: Colors.white)),
-                ],
-              ),
-            ),
-            // content + gesture area
-            Expanded(
-              child: LayoutBuilder(builder: (context, constraints) {
-                return GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTapDown: (d) => _onTapDown(d, constraints),
-                  onLongPressStart: (_) {
-                    _isPaused = true;
-                    _controller.stop();
-                  },
-                  onLongPressEnd: (_) {
-                    _isPaused = false;
-                    _controller.forward();
-                  },
-                  child: Center(
-                    child: SizedBox.expand(
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Media (image/video thumbnail) if available
-                          if (image != null)
-                            Positioned.fill(
-                              child: Image.network(image.toString(),
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (_, __, ___) => const Center(
-                                      child: Icon(Icons.broken_image,
-                                          color: Colors.white))),
-                            )
-                          else
-                            // Text-only story background
-                            Container(
-                              color: Colors.black,
-                            ),
-
-                          // Caption overlay: for media show at bottom, for text-only show centered
-                          if ((data['caption'] ?? '')
-                              .toString()
-                              .trim()
-                              .isNotEmpty)
-                            Positioned(
-                              left: 16,
-                              right: 16,
-                              bottom: image != null ? 24 : null,
-                              top: image == null ? 120 : null,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: Colors.black54,
-                                  borderRadius: BorderRadius.circular(8),
+              children: [
+                // progress bars
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0, vertical: 6.0),
+                  child: Row(
+                    children:
+                        List.generate(widget.groups[_groupIndex].length, (i) {
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                          child: _isLoading
+                              ? const LinearProgressIndicator(
+                                  value: null,
+                                  backgroundColor: Colors.white24,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                )
+                              : LinearProgressIndicator(
+                                  value: i < _index
+                                      ? 1
+                                      : (i == _index ? _controller.value : 0),
+                                  backgroundColor: Colors.white24,
+                                  valueColor:
+                                      const AlwaysStoppedAnimation<Color>(
+                                          Colors.white),
                                 ),
-                                child: Text(
-                                  data['caption']?.toString() ?? '',
-                                  textAlign: image != null
-                                      ? TextAlign.left
-                                      : TextAlign.center,
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 16),
-                                  maxLines: 6,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ),
-
-                          // Fallback icon when no media and no caption
-                          if (image == null &&
-                              (data['caption'] == null ||
-                                  data['caption'].toString().trim().isEmpty))
-                            const Icon(Icons.image,
-                                size: 80, color: Colors.white24),
-                        ],
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                // header row
+                Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          if (uid != null) {
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => ProfileScreen(userId: uid)));
+                          }
+                        },
+                        child: NetworkAvatar(url: avatar, radius: 20),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            if (uid != null) {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (_) => ProfileScreen(userId: uid)));
+                            }
+                          },
+                          child: Text(name,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      if ((data['views_count'] ?? data['views']) != null)
+                        Padding(
+                            padding: const EdgeInsets.only(right: 12.0),
+                            child: Text(
+                                '${(data['views_count'] ?? data['views']).toString()} views',
+                                style: const TextStyle(color: Colors.white70))),
+                      if (isOwner)
+                        IconButton(
+                          onPressed: _deleteCurrentStory,
+                          icon: const Icon(Icons.delete_outline,
+                              color: Colors.white),
+                        ),
+                      IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close, color: Colors.white)),
+                    ],
                   ),
-                );
-              }),
+                ),
+                // content + gesture area
+                Expanded(
+                  child: LayoutBuilder(builder: (context, constraints) {
+                    return GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTapDown: (d) => _onTapDown(d, constraints),
+                      onLongPressStart: (_) {
+                        _isPaused = true;
+                        _controller.stop();
+                      },
+                      onLongPressEnd: (_) {
+                        _isPaused = false;
+                        _controller.forward();
+                      },
+                      child: Center(
+                        child: SizedBox.expand(
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Media (image/video thumbnail) if available
+                              if (image != null)
+                                Positioned.fill(
+                                  child: Image.network(image.toString(),
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (_, __, ___) =>
+                                          const Center(
+                                              child: Icon(Icons.broken_image,
+                                                  color: Colors.white))),
+                                )
+                              else
+                                // Text-only story background
+                                Container(
+                                  color: Colors.black,
+                                ),
+
+                              // Caption overlay: for media show at bottom, for text-only show centered
+                              if ((data['caption'] ?? '')
+                                  .toString()
+                                  .trim()
+                                  .isNotEmpty)
+                                Positioned(
+                                  left: 16,
+                                  right: 16,
+                                  bottom: image != null ? 24 : null,
+                                  top: image == null ? 120 : null,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      data['caption']?.toString() ?? '',
+                                      textAlign: image != null
+                                          ? TextAlign.left
+                                          : TextAlign.center,
+                                      style: const TextStyle(
+                                          color: Colors.white, fontSize: 16),
+                                      maxLines: 6,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+
+                              // Fallback icon when no media and no caption
+                              if (image == null &&
+                                  (data['caption'] == null ||
+                                      data['caption']
+                                          .toString()
+                                          .trim()
+                                          .isEmpty))
+                                const Icon(Icons.image,
+                                    size: 80, color: Colors.white24),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+                // footer actions
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+                  child: Row(
+                    children: [
+                      IconButton(
+                          onPressed: _toggleLike,
+                          icon: Icon(
+                              _isLiked ? Icons.favorite : Icons.favorite_border,
+                              color: Colors.red)),
+                      const SizedBox(width: 8),
+                      Text(
+                          data['likes_count']?.toString() ??
+                              data['likes']?.toString() ??
+                              '0',
+                          style: const TextStyle(color: Colors.white)),
+                      const Spacer(),
+                      TextButton(
+                          onPressed: () => ScaffoldMessenger.of(context)
+                              .showSnackBar(const SnackBar(
+                                  content: Text(
+                                      'Viewers/reactions are not implemented yet'))),
+                          child: const Text('More',
+                              style: TextStyle(color: Colors.white))),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            // footer actions
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
-              child: Row(
-                children: [
-                  IconButton(
-                      onPressed: _toggleLike,
-                      icon: Icon(
-                          _isLiked ? Icons.favorite : Icons.favorite_border,
-                          color: Colors.red)),
-                  const SizedBox(width: 8),
-                  Text(
-                      data['likes_count']?.toString() ??
-                          data['likes']?.toString() ??
-                          '0',
-                      style: const TextStyle(color: Colors.white)),
-                  const Spacer(),
-                  TextButton(
-                      onPressed: () => ScaffoldMessenger.of(context)
-                          .showSnackBar(const SnackBar(
-                              content: Text(
-                                  'Viewers/reactions are not implemented yet'))),
-                      child: const Text('More',
-                          style: TextStyle(color: Colors.white))),
-                ],
+            // Loading overlay
+            if (_isLoading)
+              const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                ),
               ),
-            ),
           ],
-        ),
-        // Loading overlay
-        if (_isLoading)
-          const Center(
-            child: CircularProgressIndicator(
-              color: Colors.white,
-            ),
-          ),
-      ],
         ),
       ),
     );

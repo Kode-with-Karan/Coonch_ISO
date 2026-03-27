@@ -76,6 +76,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   late TabController _tabController;
   Map<String, dynamic>? _courseDetails;
   bool _loading = false;
+  bool _hasTriedLoadingDetails = false;
   List<dynamic> _seriesItems = [];
   bool _loadingSeriesItems = false;
   bool _isWishlisted = false;
@@ -85,17 +86,25 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   bool _isVideoInitializing = false;
   bool _hasAwardedPoints = false;
 
+  Future<T?> _pushPageDeferred<T>(Widget page,
+      {bool replace = false, bool fullscreenDialog = false}) {
+    return Future<T?>.microtask(() {
+      if (!mounted) return null;
+      final route = MaterialPageRoute<T>(
+        builder: (_) => page,
+        fullscreenDialog: fullscreenDialog,
+      );
+      if (replace) {
+        return Navigator.of(context).pushReplacement<T, T>(route);
+      }
+      return Navigator.of(context).push<T>(route);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    if (widget.courseId != null && widget.courseId!.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _loadCourseDetails();
-        }
-      });
-    }
   }
 
   void _openContentItem(
@@ -104,22 +113,24 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       required String duration,
       required String price}) {
     if (itemId.isEmpty) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => CourseDetailScreen(
-          courseId: itemId,
-          courseTitle: title,
-          duration: duration,
-          price: price,
-          color: AppTheme.primary,
-        ),
+    _pushPageDeferred<void>(
+      CourseDetailScreen(
+        courseId: itemId,
+        courseTitle: title,
+        duration: duration,
+        price: price,
+        color: AppTheme.primary,
       ),
+      replace: true,
     );
   }
 
   Future<void> _loadCourseDetails() async {
     if (!mounted) return;
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _hasTriedLoadingDetails = true;
+    });
     try {
       final api = Provider.of<ApiService>(context, listen: false);
       final details = await api.getContentById(widget.courseId!);
@@ -174,6 +185,17 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       if (!mounted) return;
       setState(() => _loading = false);
     }
+  }
+
+  Future<bool> _ensureCourseDetailsLoaded() async {
+    if (_courseDetails != null) return true;
+    if (_loading) return false;
+
+    final courseId = widget.courseId;
+    if (courseId == null || courseId.isEmpty) return false;
+
+    await _loadCourseDetails();
+    return _courseDetails != null;
   }
 
   Future<void> _loadSeriesItems(String seriesId) async {
@@ -232,15 +254,13 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
 
     if (!mounted || _videoController == null || !_isVideoInitialized) return;
 
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => _FullScreenVideoPage(
-          controller: _videoController!,
-          contentId: widget.courseId ?? '',
-          onComplete: () => _awardViewPoints(),
-        ),
-        fullscreenDialog: true,
+    await _pushPageDeferred<void>(
+      _FullScreenVideoPage(
+        controller: _videoController!,
+        contentId: widget.courseId ?? '',
+        onComplete: () => _awardViewPoints(),
       ),
+      fullscreenDialog: true,
     );
   }
 
@@ -619,7 +639,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : (_courseDetails == null
+          : ((_courseDetails == null && _hasTriedLoadingDetails)
               ? const Center(child: Text('Content not found'))
               : Column(
                   children: [
@@ -631,6 +651,20 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildMediaSection(),
+                            if (_courseDetails == null) ...[
+                              const SizedBox(height: 16),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 24),
+                                child: Text(
+                                  'Tap Play below to load this content.',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 24),
                             _buildTitleSection(),
                             const SizedBox(height: 12),
@@ -1237,12 +1271,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                   final name = (owner is Map)
                       ? (owner['name'] ?? owner['username'])?.toString() ?? ''
                       : '';
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => TeacherProfileScreen(
+                  _pushPageDeferred<void>(
+                    TeacherProfileScreen(
                       teacherName: name,
                       teacherTitle: '',
                     ),
-                  ));
+                  );
                 }
               },
               child: Row(
@@ -1357,15 +1391,17 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     final priceLabel =
         _contentPriceLabel(_courseDetails, fallback: widget.price);
     final hasPaidPrice = priceLabel != 'Free';
-    final buttonLabel = locked
-        ? lockedActionLabel(_courseDetails)
-        : premium
-            ? hasPaidPrice
-                ? 'Included in your plan • $priceLabel'
-                : 'Included in your plan'
-            : hasPaidPrice
-                ? 'Watch for $priceLabel'
-                : 'Free Watch';
+    final buttonLabel = _courseDetails == null
+        ? 'Play'
+        : (locked
+            ? lockedActionLabel(_courseDetails)
+            : premium
+                ? hasPaidPrice
+                    ? 'Included in your plan • $priceLabel'
+                    : 'Included in your plan'
+                : hasPaidPrice
+                    ? 'Watch for $priceLabel'
+                    : 'Free Watch');
     final buttonColor = locked ? Colors.orange : AppTheme.primary;
 
     return Container(
@@ -1384,17 +1420,35 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {
-              if (locked) {
+            onPressed: () async {
+              if (_courseDetails == null) {
+                final loaded = await _ensureCourseDetailsLoaded();
+                if (!loaded) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Unable to load content')),
+                  );
+                  return;
+                }
+              }
+
+              if (!mounted) return;
+
+              final loadedLocked = isLockedContent(_courseDetails);
+              final loadedPremium = isPremiumContent(_courseDetails);
+              final loadedType =
+                  (_courseDetails?['type'] ?? '').toString().toLowerCase();
+
+              if (loadedLocked) {
                 _openSubscriptionPlans();
-              } else if (type == 'video') {
+              } else if (loadedType == 'video') {
                 _openFullScreenVideo();
-              } else if (type == 'text') {
+              } else if (loadedType == 'text') {
                 _awardViewPoints();
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                      content: Text(premium
+                      content: Text(loadedPremium
                           ? 'Content unlocked with your subscription.'
                           : 'Starting playback...')),
                 );

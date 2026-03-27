@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'screens/splash_screen.dart';
 import 'screens/signup/signup_step1.dart';
 import 'screens/signup/signup_step2.dart';
@@ -7,6 +8,7 @@ import 'services/api_service.dart';
 import 'services/notification_service.dart';
 import 'services/usage_monitor.dart';
 import 'widgets/notification_overlay.dart';
+import 'widgets/notification_realtime_listener.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 
@@ -53,7 +55,10 @@ class CoonchApp extends StatelessWidget {
           '/signup/3': (_) => const SignUpStep3(),
         },
         builder: (context, child) {
-          return DefaultTextStyle.merge(
+          final media = MediaQuery.maybeOf(context);
+          const scale = kIsWeb ? 1.12 : 1.0;
+
+          Widget content = DefaultTextStyle.merge(
             // Emoji fallback applied at text-render level for SDK compatibility.
             style: const TextStyle(
               fontFamilyFallback: [
@@ -63,8 +68,20 @@ class CoonchApp extends StatelessWidget {
                 'Noto Emoji',
               ],
             ),
-            child: NotificationOverlay(child: child ?? const SizedBox.shrink()),
+            child: NotificationRealtimeListener(
+              child:
+                  NotificationOverlay(child: child ?? const SizedBox.shrink()),
+            ),
           );
+
+          if (media != null && scale != 1.0) {
+            content = MediaQuery(
+              data: media.copyWith(textScaler: TextScaler.linear(scale)),
+              child: content,
+            );
+          }
+
+          return content;
         },
       ),
     );

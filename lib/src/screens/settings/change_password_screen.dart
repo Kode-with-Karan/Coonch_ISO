@@ -12,6 +12,7 @@ class ChangePasswordScreen extends StatefulWidget {
 }
 
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
+  final _currentController = TextEditingController();
   final _newController = TextEditingController();
   final _confirmController = TextEditingController();
   bool _obscure = true;
@@ -30,6 +31,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   void dispose() {
+    _currentController.dispose();
     _newController.dispose();
     _confirmController.dispose();
     super.dispose();
@@ -38,11 +40,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   void _change() {
     final notifications =
         Provider.of<NotificationService>(context, listen: false);
+    final current = _currentController.text;
     final password = _newController.text;
     final confirm = _confirmController.text;
 
-    if (password.isEmpty || confirm.isEmpty) {
-      notifications.showWarning('Please fill both fields');
+    if (current.isEmpty || password.isEmpty || confirm.isEmpty) {
+      notifications.showWarning('Please fill all fields');
+      return;
+    }
+    if (password == current) {
+      notifications
+          .showWarning('New password must be different from current password');
       return;
     }
     if (password != confirm) {
@@ -59,7 +67,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         context: context,
         barrierDismissible: false,
         builder: (_) => const Center(child: CircularProgressIndicator()));
-    auth.updatePassword(_newController.text).then((res) {
+    auth.updatePassword(current, _newController.text).then((res) {
       Navigator.of(context).pop();
       if (res['success'] == 1) {
         notifications.showSuccess('Password changed');
@@ -95,6 +103,28 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         child: SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           child: Column(children: [
+            TextField(
+              controller: _currentController,
+              obscureText: _obscure,
+              decoration: InputDecoration(
+                hintText: 'Current Password',
+                filled: true,
+                fillColor: Colors.white,
+                suffixIcon: IconButton(
+                    onPressed: () => setState(() => _obscure = !_obscure),
+                    icon: Icon(
+                        _obscure ? Icons.visibility : Icons.visibility_off)),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade200)),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade200)),
+              ),
+            ),
+            const SizedBox(height: 12),
             TextField(
               controller: _newController,
               obscureText: _obscure,

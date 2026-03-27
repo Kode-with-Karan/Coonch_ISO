@@ -18,29 +18,71 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Coonch web entry point.">
 
-  <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="coonch">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>coonch</title>
+  <title>Coonch</title>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <script>
+    function resolveBasePath() {
+      const baseEl = document.querySelector('base');
+      const raw = baseEl ? baseEl.getAttribute('href') : '/';
+      const normalized = raw && raw !== '$FLUTTER_BASE_HREF' ? raw : '/';
+      const noTrail = normalized.endsWith('/') ? normalized.slice(0, -1) : normalized;
+      return noTrail || '';
+    }
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
-  <script src="flutter_bootstrap.js" async></script>
+    function normalizePath(path) {
+      const withLeading = path.startsWith('/') ? path : '/' + path;
+      return withLeading.replace(/\/+$/, '') || '/';
+    }
+
+    function joinBaseAndRoute(basePath, routePath) {
+      if (basePath === '/') return routePath;
+      if (routePath === '/') return basePath + '/';
+      return basePath + routePath;
+    }
+
+    function bootFlutter() {
+      const script = document.createElement('script');
+      script.src = 'flutter_bootstrap.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+
+    (function routeEntry() {
+      const base = resolveBasePath();
+      const basePath = normalizePath(base || '/');
+      const current = normalizePath(window.location.pathname);
+      const rootPath = basePath;
+      const indexPath = normalizePath(basePath + '/index.html');
+      const params = new URLSearchParams(window.location.search);
+      const forceApp = params.get('app') === '1';
+      const requestedRoute = normalizePath(params.get('route') || '/');
+
+      if (forceApp) {
+        const finalPath = joinBaseAndRoute(basePath, requestedRoute);
+        window.history.replaceState({}, '', finalPath);
+        bootFlutter();
+        return;
+      }
+
+      if (current === rootPath || current === indexPath) {
+        const target = basePath === '/' ? '/landing.html' : basePath + '/landing.html';
+        window.location.replace(target);
+        return;
+      }
+
+      bootFlutter();
+    })();
+  </script>
 </body>
 </html>

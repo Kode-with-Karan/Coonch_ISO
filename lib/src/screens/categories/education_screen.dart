@@ -564,6 +564,11 @@ class _EducationScreenState extends State<EducationScreen> {
     return colors[index % colors.length];
   }
 
+  void _pushPage(Widget page) {
+    if (!mounted) return;
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+  }
+
   @override
   Widget build(BuildContext context) {
     final userName = _getUserName();
@@ -623,11 +628,7 @@ class _EducationScreenState extends State<EducationScreen> {
                             // Settings
                             GestureDetector(
                               onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const SettingsScreen(),
-                                  ),
-                                );
+                                _pushPage(const SettingsScreen());
                               },
                               child: Container(
                                 padding: const EdgeInsets.all(12),
@@ -646,11 +647,7 @@ class _EducationScreenState extends State<EducationScreen> {
                             // Notification icon with badge
                             GestureDetector(
                               onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const NotificationsScreen(),
-                                  ),
-                                );
+                                _pushPage(const NotificationsScreen());
                               },
                               child: Container(
                                 padding: const EdgeInsets.all(12),
@@ -847,11 +844,7 @@ class _EducationScreenState extends State<EducationScreen> {
                         ),
                         TextButton(
                           onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const AllSeriesScreen(),
-                              ),
-                            );
+                            _pushPage(const AllSeriesScreen());
                           },
                           child: const Text(
                             'See all',
@@ -893,15 +886,11 @@ class _EducationScreenState extends State<EducationScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const CategoryResultsScreen(
-                                categoryName: 'This Week',
-                                categoryColor: AppTheme.primary,
-                                isThisWeek: true,
-                              ),
-                            ),
-                          );
+                          _pushPage(const CategoryResultsScreen(
+                            categoryName: 'This Week',
+                            categoryColor: AppTheme.primary,
+                            isThisWeek: true,
+                          ));
                         },
                         child: const Text(
                           'See all',
@@ -968,11 +957,7 @@ class _EducationScreenState extends State<EducationScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const AllCategoriesScreen(),
-                            ),
-                          );
+                          _pushPage(const AllCategoriesScreen());
                         },
                         child: const Text(
                           'See all',
@@ -1028,14 +1013,10 @@ class _EducationScreenState extends State<EducationScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const CategoryResultsScreen(
-                                categoryName: 'Popular',
-                                categoryColor: Color(0xFFFF8C42),
-                              ),
-                            ),
-                          );
+                          _pushPage(const CategoryResultsScreen(
+                            categoryName: 'Popular',
+                            categoryColor: Color(0xFFFF8C42),
+                          ));
                         },
                         child: const Text(
                           'See all',
@@ -1118,28 +1099,17 @@ class _EducationScreenState extends State<EducationScreen> {
             return;
           }
 
-          // Open the first item directly
           final firstItem = items.first;
           final contentId = firstItem['id']?.toString() ?? '';
           if (contentId.isEmpty) return;
 
-          final firstContent = _asContentMap(firstItem);
-          if (firstContent != null && isLockedContent(firstContent)) {
-            await _openLockedPaidContent(firstContent);
-            return;
-          }
-
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => CourseDetailScreen(
-                courseId: contentId,
-                courseTitle: firstItem['caption']?.toString() ?? title,
-                duration: firstItem['duration']?.toString() ?? '',
-                price: _getCoursePrice(firstItem),
-                color: AppTheme.primary,
-              ),
-            ),
-          );
+          _pushPage(CourseDetailScreen(
+            courseId: contentId,
+            courseTitle: firstItem['caption']?.toString() ?? title,
+            duration: firstItem['duration']?.toString() ?? '',
+            price: _getCoursePrice(firstItem),
+            color: AppTheme.primary,
+          ));
         } catch (e) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1298,23 +1268,19 @@ class _EducationScreenState extends State<EducationScreen> {
     }
 
     return GestureDetector(
-      onTap: () async {
+      onTap: () {
         final content = _asContentMap(courseData);
         if (content != null && isLockedContent(content)) {
-          await _openLockedPaidContent(content);
+          _openLockedPaidContent(content);
           return;
         }
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => CourseDetailScreen(
-              courseId: courseId,
-              courseTitle: title,
-              duration: duration,
-              price: price,
-              color: color,
-            ),
-          ),
-        );
+        _pushPage(CourseDetailScreen(
+          courseId: courseId,
+          courseTitle: title,
+          duration: duration,
+          price: price,
+          color: color,
+        ));
       },
       child: Container(
         width: 280,
@@ -1443,14 +1409,10 @@ class _EducationScreenState extends State<EducationScreen> {
             if (instructor.isNotEmpty)
               GestureDetector(
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => TeacherProfileScreen(
-                        teacherName: instructor,
-                        teacherTitle: 'Associate Editor',
-                      ),
-                    ),
-                  );
+                  _pushPage(TeacherProfileScreen(
+                    teacherName: instructor,
+                    teacherTitle: 'Associate Editor',
+                  ));
                 },
                 child: Row(
                   children: [
@@ -1495,15 +1457,11 @@ class _EducationScreenState extends State<EducationScreen> {
         orElse: () => null));
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => CategoryResultsScreen(
-              categoryId: categoryId,
-              categoryName: title,
-              categoryColor: color,
-            ),
-          ),
-        );
+        _pushPage(CategoryResultsScreen(
+          categoryId: categoryId,
+          categoryName: title,
+          categoryColor: color,
+        ));
       },
       child: Container(
         width: 140,
@@ -1586,23 +1544,19 @@ class _EducationScreenState extends State<EducationScreen> {
     }
 
     return GestureDetector(
-      onTap: () async {
+      onTap: () {
         final content = _asContentMap(courseData);
         if (content != null && isLockedContent(content)) {
-          await _openLockedPaidContent(content);
+          _openLockedPaidContent(content);
           return;
         }
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => CourseDetailScreen(
-              courseId: courseId,
-              courseTitle: title,
-              duration: duration,
-              price: price,
-              color: color,
-            ),
-          ),
-        );
+        _pushPage(CourseDetailScreen(
+          courseId: courseId,
+          courseTitle: title,
+          duration: duration,
+          price: price,
+          color: color,
+        ));
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),

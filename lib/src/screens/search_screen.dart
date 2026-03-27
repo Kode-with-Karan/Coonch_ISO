@@ -40,11 +40,25 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _onSearchChanged() {
+    if (mounted) {
+      // Rebuild so the clear button visibility tracks current input.
+      setState(() {});
+    }
     // debounce user typing
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 400), () {
       final q = _controller.text.trim();
       if (q.isNotEmpty) _doSearch(q);
+    });
+  }
+
+  void _clearSearch() {
+    _debounce?.cancel();
+    _controller.clear();
+    setState(() {
+      _loading = false;
+      _error = null;
+      _results = [];
     });
   }
 
@@ -266,9 +280,20 @@ class _SearchScreenState extends State<SearchScreen> {
                       borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide.none,
                     ),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.search),
-                      onPressed: () => _doSearch(_controller.text),
+                    suffixIcon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_controller.text.isNotEmpty)
+                          IconButton(
+                            tooltip: 'Clear',
+                            icon: const Icon(Icons.close),
+                            onPressed: _clearSearch,
+                          ),
+                        IconButton(
+                          icon: const Icon(Icons.search),
+                          onPressed: () => _doSearch(_controller.text),
+                        ),
+                      ],
                     ),
                   ),
                 ),

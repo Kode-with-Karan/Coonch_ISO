@@ -30,6 +30,14 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen>
   List<String> _tabTypes = [];
   TabController? _tabController;
 
+  void _pushPage(Widget page) {
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -251,18 +259,13 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen>
         return GestureDetector(
           onTap: () {
             if (contentId.isEmpty) return;
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => CourseDetailScreen(
-                  courseId: contentId,
-                  courseTitle: title,
-                  duration:
-                      item is Map ? (item['duration']?.toString() ?? '') : '',
-                  price: '',
-                  color: widget.accentColor,
-                ),
-              ),
-            );
+            _pushPage(CourseDetailScreen(
+              courseId: contentId,
+              courseTitle: title,
+              duration: item is Map ? (item['duration']?.toString() ?? '') : '',
+              price: '',
+              color: widget.accentColor,
+            ));
           },
           child: Container(
             decoration: BoxDecoration(

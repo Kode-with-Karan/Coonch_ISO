@@ -73,8 +73,12 @@ class PlaylistDetailScreen extends StatelessWidget {
                             ),
                           ),
                         const SizedBox(height: 12),
-                        Text(caption.isNotEmpty ? caption : 'No caption',
-                            style: const TextStyle(fontSize: 15)),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: Text(
+                              caption.isNotEmpty ? caption : 'No caption',
+                              style: const TextStyle(fontSize: 15)),
+                        ),
                         const SizedBox(height: 8),
                         Row(
                           children: [

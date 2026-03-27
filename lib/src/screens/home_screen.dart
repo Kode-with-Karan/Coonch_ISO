@@ -118,7 +118,15 @@ class _HomeScreenState extends State<HomeScreen>
     try {
       if (user is Map) {
         final map = user;
-        final dynamic name = map['name'] ?? map['username'] ?? map['full_name'];
+        final dynamic firstName = map['first_name'] ?? map['firstName'];
+        final dynamic lastName = map['last_name'] ?? map['lastName'];
+        final fullFromParts =
+            '${firstName?.toString() ?? ''} ${lastName?.toString() ?? ''}'
+                .trim();
+        final dynamic name = map['name'] ??
+            map['username'] ??
+            map['full_name'] ??
+            (fullFromParts.isNotEmpty ? fullFromParts : null);
         if (name != null && name.toString().trim().isNotEmpty) {
           return name.toString();
         }
@@ -130,7 +138,7 @@ class _HomeScreenState extends State<HomeScreen>
     } catch (_) {
       // ignore and fallback
     }
-    return 'Sara Mathew';
+    return 'User';
   }
 
   String? _userAvatar(dynamic user) {
@@ -530,18 +538,11 @@ class _HomeScreenState extends State<HomeScreen>
                               final user = s is Map && s['user'] is Map
                                   ? s['user'] as Map
                                   : null;
-                              final name = (user != null &&
-                                      (user['username'] ?? user['name']) !=
-                                          null)
-                                  ? (user['username'] ?? user['name'])
-                                      .toString()
-                                  : 'User';
-                              final avatar = (user != null &&
-                                      (user['avatar'] ?? user['avatar_url']) !=
-                                          null)
-                                  ? (user['avatar'] ?? user['avatar_url'])
-                                      .toString()
-                                  : null;
+                              final storyUserData =
+                                  (s is Map) ? (s['user'] ?? s) : null;
+                              final name =
+                                  _userDisplayName(user ?? storyUserData);
+                              final avatar = _userAvatar(user ?? storyUserData);
                               final thumb = (s is Map &&
                                       (s['thumbnail_url'] ??
                                               s['file_url'] ??
@@ -609,12 +610,15 @@ class _HomeScreenState extends State<HomeScreen>
                                                     Map<String, dynamic>.from(
                                                         e as Map))))
                                             .toList();
-                                        navigator.push(MaterialPageRoute(
+                                        await navigator.push(MaterialPageRoute(
                                             builder: (_) => StoryViewer(
                                                   groups: groups,
                                                   initialGroupIndex: uidx,
                                                   initialStoryIndex: 0,
                                                 )));
+                                        if (mounted) {
+                                          await _loadStories();
+                                        }
                                       } else {
                                         messenger.showSnackBar(const SnackBar(
                                             content:
@@ -655,12 +659,15 @@ class _HomeScreenState extends State<HomeScreen>
                                                   Map<String, dynamic>.from(
                                                       e as Map))))
                                           .toList();
-                                      navigator.push(MaterialPageRoute(
+                                      await navigator.push(MaterialPageRoute(
                                           builder: (_) => StoryViewer(
                                                 groups: groups,
                                                 initialGroupIndex: uidx,
                                                 initialStoryIndex: 0,
                                               )));
+                                      if (mounted) {
+                                        await _loadStories();
+                                      }
                                     }
                                   }
                                 },
@@ -941,66 +948,77 @@ class _AddStoryCard extends StatelessWidget {
       child: Container(
         width: 110,
         margin: const EdgeInsets.only(right: 8),
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 110,
-                  height: 100,
-                  decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(14)),
-                  child: const Center(
-                      child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.add, size: 32, color: Colors.grey),
-                    SizedBox(height: 6),
-                    Text('Add Story',
-                        style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey,
-                            fontWeight: FontWeight.w500))
-                  ])),
-                ),
-                const SizedBox(height: 15),
-                const Text('You',
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontWeight: FontWeight.w500)),
-              ],
-            ),
-            Positioned(
-              bottom: 20,
-              child: GestureDetector(
-                onTap: () {
-                  final auth =
-                      Provider.of<AuthProvider>(context, listen: false);
-                  final user = auth.user;
-                  String? id;
-                  if (user is Map) {
-                    final Map<dynamic, dynamic> userMap =
-                        user as Map<dynamic, dynamic>;
-                    id = (userMap['id'] ?? userMap['user_id'] ?? userMap['pk'])
-                        ?.toString();
-                  }
-                  // If we have an id, open the full ProfileScreen; otherwise fallback to ViewProfileScreen
-                  if (id != null) {
-                    Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => ProfileScreen(userId: id)));
-                  } else {
-                    Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => const ViewProfileScreen()));
-                  }
-                },
-                child: CircleAvatar(
-                    radius: 22,
-                    backgroundColor: Colors.white,
-                    child: NetworkAvatar(url: avatar, radius: 18)),
+        child: SizedBox(
+          height: 136,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Container(
+                    width: 110,
+                    height: 100,
+                    decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(14)),
+                    child: const Center(
+                        child:
+                            Column(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.add, size: 32, color: Colors.grey),
+                      SizedBox(height: 6),
+                      Text('Add Story',
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w500))
+                    ])),
+                  ),
+                  const SizedBox(height: 10),
+                  const Expanded(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: Text('You',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontWeight: FontWeight.w500)),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              Positioned(
+                bottom: 20,
+                child: GestureDetector(
+                  onTap: () {
+                    final auth =
+                        Provider.of<AuthProvider>(context, listen: false);
+                    final user = auth.user;
+                    String? id;
+                    if (user is Map) {
+                      final Map<dynamic, dynamic> userMap =
+                          user as Map<dynamic, dynamic>;
+                      id =
+                          (userMap['id'] ?? userMap['user_id'] ?? userMap['pk'])
+                              ?.toString();
+                    }
+                    // If we have an id, open the full ProfileScreen; otherwise fallback to ViewProfileScreen
+                    if (id != null) {
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => ProfileScreen(userId: id)));
+                    } else {
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const ViewProfileScreen()));
+                    }
+                  },
+                  child: CircleAvatar(
+                      radius: 22,
+                      backgroundColor: Colors.white,
+                      child: NetworkAvatar(url: avatar, radius: 18)),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

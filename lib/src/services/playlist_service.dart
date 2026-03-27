@@ -40,8 +40,9 @@ class PlaylistService {
       Map<String, dynamic> playlist) async {
     final all = await loadPlaylists();
     final withId = {
-      'id': playlist['id'] ?? _generateId(),
       ...playlist,
+      // Keep caller-provided IDs, but ensure a generated ID is not overwritten by null.
+      'id': playlist['id'] ?? _generateId(),
     };
     all.insert(0, withId);
     await _savePlaylists(all);

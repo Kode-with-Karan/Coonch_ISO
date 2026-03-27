@@ -204,6 +204,94 @@ class _ContentCardState extends State<ContentCard> {
     }
   }
 
+  Future<void> _showReportDialog(String contentId) async {
+    final api = Provider.of<ApiService>(context, listen: false);
+    final notifications =
+        Provider.of<NotificationService>(context, listen: false);
+
+    String selectedReason = 'Spam';
+    final TextEditingController detailsController = TextEditingController();
+
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: const Text('Report post'),
+        content: StatefulBuilder(
+          builder: (context, setState) {
+            return SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Why are you reporting this post?'),
+                  const SizedBox(height: 10),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedReason,
+                    decoration: const InputDecoration(labelText: 'Reason'),
+                    items: const [
+                      DropdownMenuItem(value: 'Spam', child: Text('Spam')),
+                      DropdownMenuItem(
+                          value: 'Harassment', child: Text('Harassment')),
+                      DropdownMenuItem(
+                          value: 'Hate speech', child: Text('Hate speech')),
+                      DropdownMenuItem(
+                          value: 'Violence', child: Text('Violence')),
+                      DropdownMenuItem(value: 'Nudity', child: Text('Nudity')),
+                      DropdownMenuItem(
+                          value: 'Misinformation',
+                          child: Text('Misinformation')),
+                      DropdownMenuItem(value: 'Other', child: Text('Other')),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() => selectedReason = value);
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: detailsController,
+                    maxLines: 4,
+                    maxLength: 300,
+                    decoration: const InputDecoration(
+                      labelText: 'Additional details (optional)',
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(d).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(d).pop(true),
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+
+    if (submitted != true) return;
+
+    try {
+      await api.reportContent(
+        contentId,
+        reason: selectedReason,
+        details: detailsController.text.trim(),
+      );
+      notifications.showSuccess('Thanks. Your report has been submitted.');
+    } catch (e) {
+      final msg = e is ApiException
+          ? 'Report failed (${e.code}): ${e.body}'
+          : 'Report failed: ${e.toString()}';
+      notifications.showError(NotificationService.formatMessage(msg));
+    }
+  }
+
   Future<void> _onMorePressed() async {
     final contentId = widget.content['id']?.toString();
     if (contentId == null) return;
@@ -275,8 +363,7 @@ class _ContentCardState extends State<ContentCard> {
             title: const Text('Report'),
             onTap: () {
               Navigator.of(c).pop();
-              Provider.of<NotificationService>(context, listen: false)
-                  .showInfo('Reported (not implemented)');
+              _showReportDialog(contentId);
             },
           )
         ])),
@@ -363,6 +450,33 @@ class _ContentCardState extends State<ContentCard> {
     final api = Provider.of<ApiService>(context, listen: false);
     final contentId = widget.content['id']?.toString();
     if (contentId == null) return;
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    String? currentUserId;
+    try {
+      final cur = auth.user;
+      if (cur != null) {
+        currentUserId = (cur['id'] ?? cur['user_id'] ?? cur['pk'])?.toString();
+      }
+    } catch (_) {
+      currentUserId = null;
+    }
+
+    Future<void> refreshParentCommentCount() async {
+      try {
+        final fresh = await api.getContentById(contentId);
+        if (!mounted) return;
+        setState(() {
+          if (fresh['comments_count'] != null) {
+            _commentsDisplay = fresh['comments_count'].toString();
+          } else if (fresh['comments'] != null) {
+            _commentsDisplay = (fresh['comments'] is List
+                ? (fresh['comments'] as List).length.toString()
+                : fresh['comments'].toString());
+          }
+        });
+        widget.onUpdated?.call(fresh);
+      } catch (_) {}
+    }
 
     await showModalBottomSheet<void>(
       context: context,
@@ -440,6 +554,10 @@ class _ContentCardState extends State<ContentCard> {
                                   (user['id'] ?? user['user_id'] ?? user['pk'])
                                       ?.toString();
                             }
+                            final commentId = cmt['id']?.toString();
+                            final isMyComment = currentUserId != null &&
+                                commentUserId != null &&
+                                currentUserId == commentUserId;
 
                             return ListTile(
                               leading: avatar != null
@@ -470,6 +588,129 @@ class _ContentCardState extends State<ContentCard> {
                                         fontWeight: FontWeight.bold)),
                               ),
                               subtitle: Text(text),
+                              trailing: (isMyComment && commentId != null)
+                                  ? PopupMenuButton<String>(
+                                      onSelected: (value) async {
+                                        if (value == 'edit') {
+                                          final editController =
+                                              TextEditingController(text: text);
+                                          final updatedText =
+                                              await showDialog<String>(
+                                            context: context,
+                                            builder: (d) => AlertDialog(
+                                              title: const Text('Edit comment'),
+                                              content: TextField(
+                                                controller: editController,
+                                                maxLines: null,
+                                                decoration:
+                                                    const InputDecoration(
+                                                  hintText:
+                                                      'Update your comment...',
+                                                ),
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.of(d).pop(),
+                                                  child: const Text('Cancel'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.of(d).pop(
+                                                          editController.text
+                                                              .trim()),
+                                                  child: const Text('Save'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+
+                                          if (updatedText == null ||
+                                              updatedText.isEmpty ||
+                                              updatedText == text) {
+                                            return;
+                                          }
+
+                                          try {
+                                            await api.updateComment(contentId,
+                                                commentId, updatedText);
+                                            setModalState(() {});
+                                            await refreshParentCommentCount();
+                                          } catch (e) {
+                                            final msg = e is ApiException
+                                                ? 'Edit failed (${e.code}): ${e.body}'
+                                                : 'Edit failed: ${e.toString()}';
+                                            if (mounted) {
+                                              Provider.of<NotificationService>(
+                                                      context,
+                                                      listen: false)
+                                                  .showError(NotificationService
+                                                      .formatMessage(msg));
+                                            }
+                                          }
+                                          return;
+                                        }
+
+                                        if (value == 'delete') {
+                                          final confirm =
+                                              await showDialog<bool>(
+                                            context: context,
+                                            builder: (d) => AlertDialog(
+                                              title:
+                                                  const Text('Delete comment'),
+                                              content: const Text(
+                                                  'Are you sure you want to delete this comment?'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.of(d)
+                                                          .pop(false),
+                                                  child: const Text('Cancel'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.of(d).pop(true),
+                                                  child: const Text('Delete',
+                                                      style: TextStyle(
+                                                          color: Colors.red)),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+
+                                          if (confirm != true) return;
+
+                                          try {
+                                            await api.deleteComment(
+                                                contentId, commentId);
+                                            setModalState(() {});
+                                            await refreshParentCommentCount();
+                                          } catch (e) {
+                                            final msg = e is ApiException
+                                                ? 'Delete failed (${e.code}): ${e.body}'
+                                                : 'Delete failed: ${e.toString()}';
+                                            if (mounted) {
+                                              Provider.of<NotificationService>(
+                                                      context,
+                                                      listen: false)
+                                                  .showError(NotificationService
+                                                      .formatMessage(msg));
+                                            }
+                                          }
+                                        }
+                                      },
+                                      itemBuilder: (_) => const [
+                                        PopupMenuItem<String>(
+                                          value: 'edit',
+                                          child: Text('Edit'),
+                                        ),
+                                        PopupMenuItem<String>(
+                                          value: 'delete',
+                                          child: Text('Delete'),
+                                        ),
+                                      ],
+                                    )
+                                  : null,
                             );
                           },
                           separatorBuilder: (_, __) => const Divider(),
@@ -519,30 +760,7 @@ class _ContentCardState extends State<ContentCard> {
                                           controller.clear();
                                           setModalState(() {});
                                           // update parent comment count
-                                          try {
-                                            final fresh = await api
-                                                .getContentById(contentId);
-                                            if (!mounted) return;
-                                            setState(() {
-                                              if (fresh['comments_count'] !=
-                                                  null) {
-                                                _commentsDisplay =
-                                                    fresh['comments_count']
-                                                        .toString();
-                                              } else if (fresh['comments'] !=
-                                                  null) {
-                                                _commentsDisplay =
-                                                    (fresh['comments'] is List
-                                                        ? (fresh['comments']
-                                                                as List)
-                                                            .length
-                                                            .toString()
-                                                        : fresh['comments']
-                                                            .toString());
-                                              }
-                                            });
-                                            widget.onUpdated?.call(fresh);
-                                          } catch (_) {}
+                                          await refreshParentCommentCount();
                                         } catch (e) {
                                           final msg = e is ApiException
                                               ? 'Comment failed (${e.code}): ${e.body}'

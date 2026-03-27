@@ -243,10 +243,14 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(ctx).pop(); // close dialog
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                          builder: (_) => const PlaylistsScreen()),
-                    );
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop(true);
+                    } else {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                            builder: (_) => const PlaylistsScreen()),
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.lightBlue,

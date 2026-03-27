@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -12,14 +14,37 @@ class NotificationsScreen extends StatefulWidget {
   State<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen> {
+class _NotificationsScreenState extends State<NotificationsScreen>
+    with WidgetsBindingObserver {
+  static const Duration _refreshInterval = Duration(seconds: 15);
+
   bool _loading = true;
   List<dynamic> _items = [];
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+    _timer = Timer.periodic(_refreshInterval, (_) {
+      if (mounted) _load();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      _load();
+    }
+    super.didChangeAppLifecycleState(state);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _timer?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -143,6 +168,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  String _formatTimestamp(String raw) {
+    final value = raw.trim();
+    if (value.isEmpty) return '';
+
+    final parsed = DateTime.tryParse(value);
+    if (parsed != null) {
+      final local = parsed.toLocal();
+      final localizations = MaterialLocalizations.of(context);
+      final date = localizations.formatMediumDate(local);
+      final time = localizations.formatTimeOfDay(
+        TimeOfDay.fromDateTime(local),
+        alwaysUse24HourFormat: MediaQuery.of(context).alwaysUse24HourFormat,
+      );
+      return '$date  $time';
+    }
+
+    // Fall back to improving common ISO-like strings when parsing fails.
+    return value.replaceAll('T', '  ').replaceFirst(RegExp(r'(\.\d+)?Z$'), '');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -176,6 +221,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     final String when = n['created_at']?.toString() ??
                         n['timestamp']?.toString() ??
                         '';
+                    final String formattedWhen = _formatTimestamp(when);
                     String? avatar;
                     if (actor is Map) {
                       avatar =
@@ -266,7 +312,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 6),
-                                Text(when,
+                                Text(formattedWhen,
                                     style: TextStyle(
                                         color: Colors.grey[500], fontSize: 12)),
                                 const SizedBox(height: 8),

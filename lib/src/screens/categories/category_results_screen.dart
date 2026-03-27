@@ -39,6 +39,14 @@ class _CategoryResultsScreenState extends State<CategoryResultsScreen> {
     'price_high'
   ];
 
+  void _pushPage(Widget page) {
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -714,17 +722,13 @@ class _CategoryResultsScreenState extends State<CategoryResultsScreen> {
           await _openLockedPaidContent(content);
           return;
         }
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => CourseDetailScreen(
-              courseId: courseId,
-              courseTitle: title,
-              duration: duration,
-              price: price,
-              color: color,
-            ),
-          ),
-        );
+        _pushPage(CourseDetailScreen(
+          courseId: courseId,
+          courseTitle: title,
+          duration: duration,
+          price: price,
+          color: color,
+        ));
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),

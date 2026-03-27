@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import '../config.dart';
 
 /// Lightweight network video player with tap-to-play/pause controls.
 class VideoPlayerView extends StatefulWidget {
@@ -34,13 +35,90 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
       }
       _controller!.addListener(_onControllerUpdate);
     } else {
-      _controller = VideoPlayerController.networkUrl(Uri.parse(widget.url));
-      _initFuture = _controller!
-          .initialize()
-          .catchError((_) => setState(() => _hasError = true));
-      _controller!.setLooping(true);
-      _controller!.addListener(_onControllerUpdate);
+      _initFuture = _initializeInternalController();
     }
+  }
+
+  Uri? _toAbsoluteUri(String raw) {
+    var url = raw.trim();
+    if (url.isEmpty) return null;
+    url = url.replaceAll('\\', '/');
+
+    if (url.startsWith('//')) {
+      url = 'https:$url';
+    }
+
+    final base = Config.baseApiUrl.endsWith('/')
+        ? Config.baseApiUrl
+        : '${Config.baseApiUrl}/';
+
+    if (url.startsWith('/')) {
+      url = '${base.substring(0, base.length - 1)}$url';
+    } else if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = '$base$url';
+    }
+
+    return Uri.tryParse(url);
+  }
+
+  List<Uri> _candidateUris(String raw) {
+    final Set<String> seen = {};
+    final List<Uri> out = [];
+
+    void addUri(Uri? uri) {
+      if (uri == null) return;
+      final key = uri.toString();
+      if (seen.add(key)) out.add(uri);
+    }
+
+    final primary = _toAbsoluteUri(raw);
+    addUri(primary);
+
+    if (primary != null) {
+      final encoded = Uri.tryParse(Uri.encodeFull(primary.toString()));
+      addUri(encoded);
+
+      if (primary.scheme == 'http' &&
+          primary.host.toLowerCase().contains('pythonanywhere.com')) {
+        addUri(primary.replace(scheme: 'https'));
+      }
+    }
+
+    return out;
+  }
+
+  Future<void> _initializeInternalController() async {
+    final candidates = _candidateUris(widget.url);
+    Object? lastError;
+
+    for (final uri in candidates) {
+      final c = VideoPlayerController.networkUrl(uri);
+      try {
+        await c.initialize();
+        await c.setLooping(true);
+
+        if (!mounted) {
+          await c.dispose();
+          return;
+        }
+
+        _controller = c;
+        _controller!.addListener(_onControllerUpdate);
+        return;
+      } catch (e) {
+        lastError = e;
+        await c.dispose();
+      }
+    }
+
+    if (mounted) {
+      setState(() => _hasError = true);
+    }
+
+    // ignore: avoid_print
+    print('VideoPlayerView: failed to load URL "${widget.url}"; '
+        'candidates=${candidates.map((u) => u.toString()).toList()} '
+        'error=$lastError');
   }
 
   void _onControllerUpdate() {

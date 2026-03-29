@@ -23,11 +23,7 @@ def flutter_root
   raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}"
 end
 
-def flutter_ios_podfile_setup
-  require File.expand_path(File.join(flutter_root, 'packages', 'flutter_tools', 'bin', 'podhelper'), __FILE__)
-  flutter_ios_podfile_setup
-end
-
+require File.expand_path(File.join(flutter_root, 'packages', 'flutter_tools', 'bin', 'podhelper'), __FILE__)
 flutter_ios_podfile_setup
 
 target 'Runner' do

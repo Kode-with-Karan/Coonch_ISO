@@ -17,8 +17,9 @@ workflows:
       - name: Build iOS (no codesign)
         script: flutter build ios --release --no-codesign
     artifacts:
-      - build/ios/iphoneos/*.ipa
-      - build/ios/iphoneos/Runner.app
+      # - build/ios/iphoneos/*.ipa
+      # - build/ios/iphoneos/Runner.app
+      - build/ios/ipa/*.ipa
     cache:
       cache_paths:
         - ~/.pub-cache

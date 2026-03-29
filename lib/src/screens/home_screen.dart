@@ -75,7 +75,9 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     _sidebarCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 320));
+      vsync: this,
+      duration: const Duration(milliseconds: 320),
+    );
   }
 
   @override
@@ -123,7 +125,8 @@ class _HomeScreenState extends State<HomeScreen>
         final fullFromParts =
             '${firstName?.toString() ?? ''} ${lastName?.toString() ?? ''}'
                 .trim();
-        final dynamic name = map['name'] ??
+        final dynamic name =
+            map['name'] ??
             map['username'] ??
             map['full_name'] ??
             (fullFromParts.isNotEmpty ? fullFromParts : null);
@@ -277,19 +280,22 @@ class _HomeScreenState extends State<HomeScreen>
       // Topic enforcement post-fetch (manual only) with education exclusion
       List<dynamic> finalList = list;
       if (manualTopic != null) {
-        finalList =
-            list.where((it) => _topicMatches(it, [manualTopic])).toList();
+        finalList = list
+            .where((it) => _topicMatches(it, [manualTopic]))
+            .toList();
       }
       // Always remove education content from home feed
-      finalList =
-          finalList.where((it) => !_topicMatches(it, ['education'])).toList();
+      finalList = finalList
+          .where((it) => !_topicMatches(it, ['education']))
+          .toList();
 
       setState(() => _contents = finalList);
     } catch (e) {
       if (!mounted) return;
       setState(() => _contents = []);
-      messenger
-          .showSnackBar(SnackBar(content: Text('Failed to load contents: $e')));
+      messenger.showSnackBar(
+        SnackBar(content: Text('Failed to load contents: $e')),
+      );
     } finally {
       if (mounted) setState(() => _loadingContents = false);
     }
@@ -308,7 +314,7 @@ class _HomeScreenState extends State<HomeScreen>
       {
         'key': 'infotainment',
         'label': 'Infotainment',
-        'icon': Icons.auto_stories
+        'icon': Icons.auto_stories,
       },
     ];
 
@@ -316,49 +322,62 @@ class _HomeScreenState extends State<HomeScreen>
       context: context,
       isScrollControlled: false,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (c) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text('Filter by topic',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 12),
-            ...topics.map((t) {
-              final key = t['key'] as String?;
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: Colors.grey[100],
-                  child: Icon(t['icon'] as IconData, color: Colors.lightBlue),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                title: Text(t['label'] as String),
-                trailing: _selectedTopic == key
-                    ? const Icon(Icons.check, color: Colors.lightBlue)
-                    : null,
-                onTap: () => Navigator.of(c).pop(key),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                dense: false,
-              );
-            }).toList(),
-            const SizedBox(height: 8),
-            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-              TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'))
-            ])
-          ]),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Filter by topic',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 12),
+              ...topics.map((t) {
+                final key = t['key'] as String?;
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.grey[100],
+                    child: Icon(t['icon'] as IconData, color: Colors.lightBlue),
+                  ),
+                  title: Text(t['label'] as String),
+                  trailing: _selectedTopic == key
+                      ? const Icon(Icons.check, color: Colors.lightBlue)
+                      : null,
+                  onTap: () => Navigator.of(c).pop(key),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  dense: false,
+                );
+              }).toList(),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -409,7 +428,8 @@ class _HomeScreenState extends State<HomeScreen>
             actions: [
               IconButton(
                 onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const SettingsScreen())),
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                ),
                 icon: const Icon(Icons.settings_outlined),
               ),
               // Topic filter (opens styled modal)
@@ -437,42 +457,53 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
               // Notifications icon with unread badge
-              Consumer<AuthProvider>(builder: (context, auth, _) {
-                final count = auth.unreadNotifications;
-                return IconButton(
-                  onPressed: () async {
-                    await Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => const NotificationsScreen()));
-                    // After returning, refresh provider unread count
-                    await auth.loadUnreadCount();
-                  },
-                  icon: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      const Icon(Icons.notifications_none),
-                      if (count > 0)
-                        Positioned(
-                          right: -6,
-                          top: -6,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                                color: Colors.red, shape: BoxShape.circle),
-                            constraints: const BoxConstraints(
-                                minWidth: 18, minHeight: 18),
-                            child: Center(
-                              child: Text(
-                                count > 99 ? '99+' : count.toString(),
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 10),
+              Consumer<AuthProvider>(
+                builder: (context, auth, _) {
+                  final count = auth.unreadNotifications;
+                  return IconButton(
+                    onPressed: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationsScreen(),
+                        ),
+                      );
+                      // After returning, refresh provider unread count
+                      await auth.loadUnreadCount();
+                    },
+                    icon: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        const Icon(Icons.notifications_none),
+                        if (count > 0)
+                          Positioned(
+                            right: -6,
+                            top: -6,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 18,
+                                minHeight: 18,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  count > 99 ? '99+' : count.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                );
-              }),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ],
           ),
           body: SafeArea(
@@ -484,274 +515,337 @@ class _HomeScreenState extends State<HomeScreen>
                       const SizedBox(height: 6),
                       SizedBox(
                         height: 160,
-                        child: Builder(builder: (context) {
-                          // Group stories by owner user id so each user has one story box
-                          final Map<String, List<dynamic>> grouped = {};
-                          final List<String> ordered = [];
-                          for (final s in _stories) {
-                            final uid =
-                                _extractUserId((s is Map) ? s['user'] : s) ??
-                                    '';
-                            if (!grouped.containsKey(uid)) {
-                              grouped[uid] = [];
-                              ordered.add(uid);
-                            }
-                            grouped[uid]!.add(s);
-                          }
-
-                          // Ensure the owner's group (if any) appears first
-                          final auth =
-                              Provider.of<AuthProvider>(context, listen: false);
-                          final myIdLocal = _extractUserId(auth.user);
-                          if (myIdLocal != null &&
-                              ordered.contains(myIdLocal)) {
-                            ordered.remove(myIdLocal);
-                            ordered.insert(0, myIdLocal);
-                          }
-
-                          // Build one card per user; include AddStory card at start
-                          final int itemCount = ordered.length + 1;
-
-                          if (_loadingStories) {
-                            return const Center(
-                                child: CircularProgressIndicator());
-                          }
-
-                          return ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
-                            itemCount: itemCount,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(width: 10),
-                            itemBuilder: (context, idx) {
-                              if (idx == 0) return const _AddStoryCard();
-                              final uidx = idx - 1;
-                              if (uidx < 0 || uidx >= ordered.length) {
-                                return const SizedBox.shrink();
+                        child: Builder(
+                          builder: (context) {
+                            // Group stories by owner user id so each user has one story box
+                            final Map<String, List<dynamic>> grouped = {};
+                            final List<String> ordered = [];
+                            for (final s in _stories) {
+                              final uid =
+                                  _extractUserId((s is Map) ? s['user'] : s) ??
+                                  '';
+                              if (!grouped.containsKey(uid)) {
+                                grouped[uid] = [];
+                                ordered.add(uid);
                               }
-                              final uid = ordered[uidx];
-                              final userStories = grouped[uid] ?? [];
-                              final s = userStories.isNotEmpty
-                                  ? userStories[0]
-                                  : null;
-                              final user = s is Map && s['user'] is Map
-                                  ? s['user'] as Map
-                                  : null;
-                              final storyUserData =
-                                  (s is Map) ? (s['user'] ?? s) : null;
-                              final name =
-                                  _userDisplayName(user ?? storyUserData);
-                              final avatar = _userAvatar(user ?? storyUserData);
-                              final thumb = (s is Map &&
-                                      (s['thumbnail_url'] ??
+                              grouped[uid]!.add(s);
+                            }
+
+                            // Ensure the owner's group (if any) appears first
+                            final auth = Provider.of<AuthProvider>(
+                              context,
+                              listen: false,
+                            );
+                            final myIdLocal = _extractUserId(auth.user);
+                            if (myIdLocal != null &&
+                                ordered.contains(myIdLocal)) {
+                              ordered.remove(myIdLocal);
+                              ordered.insert(0, myIdLocal);
+                            }
+
+                            // Build one card per user; include AddStory card at start
+                            final int itemCount = ordered.length + 1;
+
+                            if (_loadingStories) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+
+                            return ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              itemCount: itemCount,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(width: 10),
+                              itemBuilder: (context, idx) {
+                                if (idx == 0) return const _AddStoryCard();
+                                final uidx = idx - 1;
+                                if (uidx < 0 || uidx >= ordered.length) {
+                                  return const SizedBox.shrink();
+                                }
+                                final uid = ordered[uidx];
+                                final userStories = grouped[uid] ?? [];
+                                final s = userStories.isNotEmpty
+                                    ? userStories[0]
+                                    : null;
+                                final user = s is Map && s['user'] is Map
+                                    ? s['user'] as Map
+                                    : null;
+                                final storyUserData = (s is Map)
+                                    ? (s['user'] ?? s)
+                                    : null;
+                                final name = _userDisplayName(
+                                  user ?? storyUserData,
+                                );
+                                final avatar = _userAvatar(
+                                  user ?? storyUserData,
+                                );
+                                final thumb =
+                                    (s is Map &&
+                                        (s['thumbnail_url'] ??
+                                                s['file_url'] ??
+                                                s['file']) !=
+                                            null)
+                                    ? (s['thumbnail_url'] ??
                                               s['file_url'] ??
-                                              s['file']) !=
-                                          null)
-                                  ? (s['thumbnail_url'] ??
-                                          s['file_url'] ??
-                                          s['file'])
-                                      .toString()
-                                  : avatar;
-                              final thumbUrl = thumb ??
-                                  'https://www.gravatar.com/avatar/?d=mp&s=400';
+                                              s['file'])
+                                          .toString()
+                                    : avatar;
+                                final thumbUrl =
+                                    thumb ??
+                                    'https://www.gravatar.com/avatar/?d=mp&s=400';
 
-                              return GestureDetector(
-                                onTap: () async {
-                                  // capture navigator & messenger before any await
-                                  final navigator = Navigator.of(context);
-                                  final messenger =
-                                      ScaffoldMessenger.of(context);
-
-                                  final auth = Provider.of<AuthProvider>(
+                                return GestureDetector(
+                                  onTap: () async {
+                                    // capture navigator & messenger before any await
+                                    final navigator = Navigator.of(context);
+                                    final messenger = ScaffoldMessenger.of(
                                       context,
-                                      listen: false);
-                                  final myIdInner = _extractUserId(auth.user);
-
-                                  // If tapped user's id equals my id -> show modal (watch/upload)
-                                  if (uid == myIdInner) {
-                                    final choice =
-                                        await showModalBottomSheet<String>(
-                                      context: context,
-                                      builder: (_) => SafeArea(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            ListTile(
-                                              leading:
-                                                  const Icon(Icons.visibility),
-                                              title: const Text('Watch story'),
-                                              onTap: () =>
-                                                  Navigator.of(_).pop('watch'),
-                                            ),
-                                            ListTile(
-                                              leading:
-                                                  const Icon(Icons.upload_file),
-                                              title: const Text(
-                                                  'Upload new story'),
-                                              onTap: () =>
-                                                  Navigator.of(_).pop('upload'),
-                                            ),
-                                            const SizedBox(height: 8),
-                                          ],
-                                        ),
-                                      ),
                                     );
 
-                                    if (!mounted) return;
+                                    final auth = Provider.of<AuthProvider>(
+                                      context,
+                                      listen: false,
+                                    );
+                                    final myIdInner = _extractUserId(auth.user);
 
-                                    if (choice == 'watch') {
-                                      if (userStories.isNotEmpty) {
-                                        // Build groups (ordered by `ordered`) and open StoryViewer
-                                        final groups = ordered
-                                            .map((uid) => List<
-                                                    Map<String, dynamic>>.from(
-                                                (grouped[uid] ?? []).map((e) =>
-                                                    Map<String, dynamic>.from(
-                                                        e as Map))))
-                                            .toList();
-                                        await navigator.push(MaterialPageRoute(
-                                            builder: (_) => StoryViewer(
-                                                  groups: groups,
-                                                  initialGroupIndex: uidx,
-                                                  initialStoryIndex: 0,
-                                                )));
-                                        if (mounted) {
-                                          await _loadStories();
-                                        }
-                                      } else {
-                                        messenger.showSnackBar(const SnackBar(
-                                            content:
-                                                Text('No stories to watch')));
-                                      }
-                                    } else if (choice == 'upload') {
-                                      final res = await navigator.push(
-                                          MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const CreateStoryScreen()));
+                                    // If tapped user's id equals my id -> show modal (watch/upload)
+                                    if (uid == myIdInner) {
+                                      final choice =
+                                          await showModalBottomSheet<String>(
+                                            context: context,
+                                            builder: (sheetContext) => SafeArea(
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  ListTile(
+                                                    leading: const Icon(
+                                                      Icons.visibility,
+                                                    ),
+                                                    title: const Text(
+                                                      'Watch story',
+                                                    ),
+                                                    onTap: () => Navigator.of(
+                                                      sheetContext,
+                                                    ).pop('watch'),
+                                                  ),
+                                                  ListTile(
+                                                    leading: const Icon(
+                                                      Icons.upload_file,
+                                                    ),
+                                                    title: const Text(
+                                                      'Upload new story',
+                                                    ),
+                                                    onTap: () => Navigator.of(
+                                                      sheetContext,
+                                                    ).pop('upload'),
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+
                                       if (!mounted) return;
-                                      if (res == true) {
-                                        await _loadStories();
-                                      } else if (res is Map) {
-                                        try {
-                                          final data = res['data'] is Map
-                                              ? res['data']
-                                              : res;
-                                          if (data is Map) {
-                                            insertStory(
-                                                Map<String, dynamic>.from(
-                                                    data));
-                                          } else {
-                                            await _loadStories();
-                                          }
-                                        } catch (_) {
-                                          await _loadStories();
-                                        }
-                                      }
-                                    }
-                                  } else {
-                                    // Non-owner: open the first story of that user, but allow switching across users
-                                    if (userStories.isNotEmpty) {
-                                      final groups = ordered
-                                          .map((uid) => List<
-                                                  Map<String, dynamic>>.from(
-                                              (grouped[uid] ?? []).map((e) =>
-                                                  Map<String, dynamic>.from(
-                                                      e as Map))))
-                                          .toList();
-                                      await navigator.push(MaterialPageRoute(
-                                          builder: (_) => StoryViewer(
+
+                                      if (choice == 'watch') {
+                                        if (userStories.isNotEmpty) {
+                                          // Build groups (ordered by `ordered`) and open StoryViewer
+                                          final groups = ordered
+                                              .map(
+                                                (uid) =>
+                                                    List<
+                                                      Map<String, dynamic>
+                                                    >.from(
+                                                      (grouped[uid] ?? []).map(
+                                                        (e) =>
+                                                            Map<
+                                                              String,
+                                                              dynamic
+                                                            >.from(e as Map),
+                                                      ),
+                                                    ),
+                                              )
+                                              .toList();
+                                          await navigator.push(
+                                            MaterialPageRoute(
+                                              builder: (_) => StoryViewer(
                                                 groups: groups,
                                                 initialGroupIndex: uidx,
                                                 initialStoryIndex: 0,
-                                              )));
-                                      if (mounted) {
-                                        await _loadStories();
+                                              ),
+                                            ),
+                                          );
+                                          if (mounted) {
+                                            await _loadStories();
+                                          }
+                                        } else {
+                                          messenger.showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'No stories to watch',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      } else if (choice == 'upload') {
+                                        final res = await navigator.push(
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const CreateStoryScreen(),
+                                          ),
+                                        );
+                                        if (!mounted) return;
+                                        if (res == true) {
+                                          await _loadStories();
+                                        } else if (res is Map) {
+                                          try {
+                                            final data = res['data'] is Map
+                                                ? res['data']
+                                                : res;
+                                            if (data is Map) {
+                                              insertStory(
+                                                Map<String, dynamic>.from(data),
+                                              );
+                                            } else {
+                                              await _loadStories();
+                                            }
+                                          } catch (_) {
+                                            await _loadStories();
+                                          }
+                                        }
+                                      }
+                                    } else {
+                                      // Non-owner: open the first story of that user, but allow switching across users
+                                      if (userStories.isNotEmpty) {
+                                        final groups = ordered
+                                            .map(
+                                              (uid) =>
+                                                  List<
+                                                    Map<String, dynamic>
+                                                  >.from(
+                                                    (grouped[uid] ?? []).map(
+                                                      (e) =>
+                                                          Map<
+                                                            String,
+                                                            dynamic
+                                                          >.from(e as Map),
+                                                    ),
+                                                  ),
+                                            )
+                                            .toList();
+                                        await navigator.push(
+                                          MaterialPageRoute(
+                                            builder: (_) => StoryViewer(
+                                              groups: groups,
+                                              initialGroupIndex: uidx,
+                                              initialStoryIndex: 0,
+                                            ),
+                                          ),
+                                        );
+                                        if (mounted) {
+                                          await _loadStories();
+                                        }
                                       }
                                     }
-                                  }
-                                },
-                                child: Container(
-                                  width: 110,
-                                  margin: const EdgeInsets.only(right: 8),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Stack(
-                                        children: [
-                                          SizedBox(
-                                            width: 110,
-                                            height: 100,
-                                            child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(14),
-                                              child: Image.network(
-                                                thumbUrl,
-                                                fit: BoxFit.cover,
-                                                width: 110,
-                                                height: 100,
-                                                errorBuilder: (_, __, ___) =>
-                                                    Container(
+                                  },
+                                  child: Container(
+                                    width: 110,
+                                    margin: const EdgeInsets.only(right: 8),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Stack(
+                                          children: [
+                                            SizedBox(
+                                              width: 110,
+                                              height: 100,
+                                              child: ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                                child: Image.network(
+                                                  thumbUrl,
+                                                  fit: BoxFit.cover,
+                                                  width: 110,
+                                                  height: 100,
+                                                  errorBuilder: (_, __, ___) =>
+                                                      Container(
                                                         width: 110,
                                                         height: 100,
                                                         color: Colors.grey[200],
                                                         child: const Icon(
-                                                            Icons.image,
-                                                            color:
-                                                                Colors.grey)),
+                                                          Icons.image,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      ),
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                          Positioned(
+                                            Positioned(
                                               left: 6,
                                               top: 6,
                                               child: GestureDetector(
                                                 onTap: () {
                                                   // Open the user's profile
                                                   Navigator.of(context).push(
-                                                      MaterialPageRoute(
-                                                          builder: (_) =>
-                                                              ProfileScreen(
-                                                                  userId:
-                                                                      uid)));
+                                                    MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          ProfileScreen(
+                                                            userId: uid,
+                                                          ),
+                                                    ),
+                                                  );
                                                 },
                                                 child: CircleAvatar(
-                                                    radius: 16,
-                                                    backgroundColor:
-                                                        Colors.white,
-                                                    child: NetworkAvatar(
-                                                        url: avatar,
-                                                        radius: 14)),
-                                              )),
-                                          // story-count badge removed — keep only avatar/thumbnail
-                                        ],
-                                      ),
-                                      const SizedBox(height: 6),
-                                      GestureDetector(
-                                        onTap: () {
-                                          Navigator.of(context)
-                                              .push(MaterialPageRoute(
-                                                  builder: (_) => ProfileScreen(
-                                                        userId: uid,
-                                                      )));
-                                        },
-                                        child: Text(name,
+                                                  radius: 16,
+                                                  backgroundColor: Colors.white,
+                                                  child: NetworkAvatar(
+                                                    url: avatar,
+                                                    radius: 14,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            // story-count badge removed — keep only avatar/thumbnail
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        GestureDetector(
+                                          onTap: () {
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    ProfileScreen(userId: uid),
+                                              ),
+                                            );
+                                          },
+                                          child: Text(
+                                            name,
                                             overflow: TextOverflow.ellipsis,
                                             style: const TextStyle(
-                                                fontWeight: FontWeight.w500)),
-                                      ),
-                                    ],
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                          );
-                        }),
+                                );
+                              },
+                            );
+                          },
+                        ),
                       ),
                       Container(
                         color: Colors.white,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         child: SizedBox(
                           height: 46,
                           child: ListView.builder(
@@ -765,19 +859,24 @@ class _HomeScreenState extends State<HomeScreen>
                                   selectedColor: Colors.lightBlue[100],
                                   backgroundColor: Colors.grey[100],
                                   labelPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16),
-                                  label: Text(_filters[i],
-                                      style: TextStyle(
-                                          color: selected
-                                              ? Colors.lightBlue
-                                              : Colors.black54,
-                                          fontWeight: selected
-                                              ? FontWeight.bold
-                                              : FontWeight.w400)),
+                                    horizontal: 16,
+                                  ),
+                                  label: Text(
+                                    _filters[i],
+                                    style: TextStyle(
+                                      color: selected
+                                          ? Colors.lightBlue
+                                          : Colors.black54,
+                                      fontWeight: selected
+                                          ? FontWeight.bold
+                                          : FontWeight.w400,
+                                    ),
+                                  ),
                                   selected: selected,
                                   onSelected: (_) => _onFilterSelected(i),
                                   shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20)),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
                                 ),
                               );
                             },
@@ -799,8 +898,11 @@ class _HomeScreenState extends State<HomeScreen>
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 48.0),
                       child: Center(
-                          child: Text('No content for the selected filter',
-                              style: TextStyle(color: Colors.black54))),
+                        child: Text(
+                          'No content for the selected filter',
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                      ),
                     ),
                   )
                 else
@@ -842,11 +944,12 @@ class _HomeScreenState extends State<HomeScreen>
                   Opacity(
                     opacity: t * 0.38,
                     child: GestureDetector(
-                        onTap: () {
-                          _sidebarCtrl.reverse();
-                          setState(() => _sidebarOpen = false);
-                        },
-                        child: Container(color: Colors.black)),
+                      onTap: () {
+                        _sidebarCtrl.reverse();
+                        setState(() => _sidebarOpen = false);
+                      },
+                      child: Container(color: Colors.black),
+                    ),
                   ),
 
                 // Slide-in sidebar
@@ -859,8 +962,11 @@ class _HomeScreenState extends State<HomeScreen>
                       _sidebarCtrl.reverse();
                       setState(() => _sidebarOpen = false);
                       if (key == 'education') {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (_) => const EducationScreen()));
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const EducationScreen(),
+                          ),
+                        );
                       } else if (key == 'infotainment') {
                         setState(() => _selectedTopic = 'infotainment');
                         _loadContents();
@@ -868,23 +974,32 @@ class _HomeScreenState extends State<HomeScreen>
                         setState(() => _selectedTopic = 'entertainment');
                         _loadContents();
                       } else if (key == 'settings') {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (_) => const SettingsScreen()));
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const SettingsScreen(),
+                          ),
+                        );
                       } else if (key == 'help') {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (_) => const HelpSupportScreen()));
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const HelpSupportScreen(),
+                          ),
+                        );
                       }
                     },
                     onLogout: () async {
                       _sidebarCtrl.reverse();
                       setState(() => _sidebarOpen = false);
-                      final auth =
-                          Provider.of<AuthProvider>(context, listen: false);
+                      final auth = Provider.of<AuthProvider>(
+                        context,
+                        listen: false,
+                      );
                       await auth.logout();
                       if (context.mounted) {
                         Navigator.of(context).pushAndRemoveUntil(
                           MaterialPageRoute(
-                              builder: (_) => const LoginScreen()),
+                            builder: (_) => const LoginScreen(),
+                          ),
                           (route) => false,
                         );
                       }
@@ -892,8 +1007,11 @@ class _HomeScreenState extends State<HomeScreen>
                     onViewProfile: () {
                       _sidebarCtrl.reverse();
                       setState(() => _sidebarOpen = false);
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => const ProfileScreen()));
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ProfileScreen(),
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -925,8 +1043,9 @@ class _AddStoryCard extends StatelessWidget {
     return GestureDetector(
       onTap: () async {
         final homeState = context.findAncestorStateOfType<_HomeScreenState>();
-        final res = await Navigator.of(context)
-            .push(MaterialPageRoute(builder: (_) => const CreateStoryScreen()));
+        final res = await Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const CreateStoryScreen()));
         if (res == true) {
           homeState?._loadStories();
         } else if (res is Map) {
@@ -961,28 +1080,37 @@ class _AddStoryCard extends StatelessWidget {
                     width: 110,
                     height: 100,
                     decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(14)),
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                     child: const Center(
-                        child:
-                            Column(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.add, size: 32, color: Colors.grey),
-                      SizedBox(height: 6),
-                      Text('Add Story',
-                          style: TextStyle(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.add, size: 32, color: Colors.grey),
+                          SizedBox(height: 6),
+                          Text(
+                            'Add Story',
+                            style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey,
-                              fontWeight: FontWeight.w500))
-                    ])),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 10),
                   const Expanded(
                     child: Align(
                       alignment: Alignment.topCenter,
-                      child: Text('You',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontWeight: FontWeight.w500)),
+                      child: Text(
+                        'You',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
                     ),
                   ),
                 ],
@@ -991,8 +1119,10 @@ class _AddStoryCard extends StatelessWidget {
                 bottom: 20,
                 child: GestureDetector(
                   onTap: () {
-                    final auth =
-                        Provider.of<AuthProvider>(context, listen: false);
+                    final auth = Provider.of<AuthProvider>(
+                      context,
+                      listen: false,
+                    );
                     final user = auth.user;
                     String? id;
                     if (user is Map) {
@@ -1004,17 +1134,24 @@ class _AddStoryCard extends StatelessWidget {
                     }
                     // If we have an id, open the full ProfileScreen; otherwise fallback to ViewProfileScreen
                     if (id != null) {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => ProfileScreen(userId: id)));
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ProfileScreen(userId: id),
+                        ),
+                      );
                     } else {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => const ViewProfileScreen()));
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ViewProfileScreen(),
+                        ),
+                      );
                     }
                   },
                   child: CircleAvatar(
-                      radius: 22,
-                      backgroundColor: Colors.white,
-                      child: NetworkAvatar(url: avatar, radius: 18)),
+                    radius: 22,
+                    backgroundColor: Colors.white,
+                    child: NetworkAvatar(url: avatar, radius: 18),
+                  ),
                 ),
               ),
             ],

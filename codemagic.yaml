@@ -9,15 +9,13 @@ workflows:
       cocoapods: default
     scripts:
       - name: Flutter pub get
-        script: |
-          flutter pub get
+        script: flutter pub get
       - name: Pod install
         script: |
           cd ios
           pod install --repo-update
       - name: Build iOS (no codesign)
-        script: |
-          flutter build ios --release --no-codesign
+        script: flutter build ios --release --no-codesign
     artifacts:
       - build/ios/iphoneos/*.ipa
       - build/ios/iphoneos/Runner.app

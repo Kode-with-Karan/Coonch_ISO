@@ -76,7 +76,7 @@ class CoonchApp extends StatelessWidget {
 
           if (media != null && scale != 1.0) {
             content = MediaQuery(
-              data: media.copyWith(textScaler: TextScaler.linear(scale)),
+              data: media.copyWith(textScaler: const TextScaler.linear(scale)),
               child: content,
             );
           }

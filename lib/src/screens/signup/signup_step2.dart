@@ -264,7 +264,7 @@ class _SignUpStep2State extends State<SignUpStep2> {
           child: Center(
             child: ConstrainedBox(
               constraints:
-                  BoxConstraints(maxWidth: kIsWeb ? 560 : double.infinity),
+                  const BoxConstraints(maxWidth: kIsWeb ? 560 : double.infinity),
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

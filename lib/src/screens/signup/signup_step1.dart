@@ -31,7 +31,7 @@ class _SignUpStep1State extends State<SignUpStep1> {
     'abc123',
     '111111',
     '123123',
-    'password1'
+    'password1',
   ];
 
   @override
@@ -54,7 +54,8 @@ class _SignUpStep1State extends State<SignUpStep1> {
           Navigator.of(context).pop();
         } else {
           Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const HomeScreen()));
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
         }
       }
     });
@@ -108,164 +109,200 @@ class _SignUpStep1State extends State<SignUpStep1> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
         leading: IconButton(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.arrow_back, color: Colors.black)),
+          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: EdgeInsets.fromLTRB(
-              20, 0, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           child: Center(
             child: ConstrainedBox(
-              constraints:
-                  BoxConstraints(maxWidth: kIsWeb ? 560 : double.infinity),
+              constraints: const BoxConstraints(
+                maxWidth: kIsWeb ? 560 : double.infinity,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 8),
                   const Center(
-                      child: Column(children: [
-                    SizedBox(height: 4),
-                    Image(
-                        image: AssetImage('assets/icons/app_icon.png'),
-                        height: 100,
-                        fit: BoxFit.contain),
-                    SizedBox(height: 22),
-                  ])),
-                  const Text('Sign Up',
-                      style:
-                          TextStyle(fontSize: 34, fontWeight: FontWeight.w700)),
+                    child: Column(
+                      children: [
+                        SizedBox(height: 4),
+                        Image(
+                          image: AssetImage('assets/icons/app_icon.png'),
+                          height: 100,
+                          fit: BoxFit.contain,
+                        ),
+                        SizedBox(height: 22),
+                      ],
+                    ),
+                  ),
+                  const Text(
+                    'Sign Up',
+                    style: TextStyle(fontSize: 34, fontWeight: FontWeight.w700),
+                  ),
                   const SizedBox(height: 8),
-                  const Text('Enter your details and sign In',
-                      style: TextStyle(color: Colors.grey)),
+                  const Text(
+                    'Enter your details and sign In',
+                    style: TextStyle(color: Colors.grey),
+                  ),
                   const SizedBox(height: 24),
                   _buildInput(
-                      label: 'Email',
-                      controller: _emailController,
-                      hint: 'josh@gmail.com',
-                      errorText: _emailError,
-                      keyboardType: TextInputType.emailAddress,
-                      onChanged: (_) {
-                        if (_emailError != null) {
-                          setState(() => _emailError = null);
-                        }
-                      }),
+                    label: 'Email',
+                    controller: _emailController,
+                    hint: 'josh@gmail.com',
+                    errorText: _emailError,
+                    keyboardType: TextInputType.emailAddress,
+                    onChanged: (_) {
+                      if (_emailError != null) {
+                        setState(() => _emailError = null);
+                      }
+                    },
+                  ),
                   const SizedBox(height: 12),
                   _buildInput(
-                      label: 'Password',
-                      controller: _passwordController,
-                      hint: 'Password',
-                      errorText: _passwordError,
-                      obscure: _obscure,
-                      onChanged: (_) {
-                        if (_passwordError != null) {
-                          setState(() => _passwordError = null);
-                        }
-                      },
-                      suffix: IconButton(
-                          onPressed: () => setState(() => _obscure = !_obscure),
-                          icon: Icon(_obscure
-                              ? Icons.visibility
-                              : Icons.visibility_off))),
+                    label: 'Password',
+                    controller: _passwordController,
+                    hint: 'Password',
+                    errorText: _passwordError,
+                    obscure: _obscure,
+                    onChanged: (_) {
+                      if (_passwordError != null) {
+                        setState(() => _passwordError = null);
+                      }
+                    },
+                    suffix: IconButton(
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                      icon: Icon(
+                        _obscure ? Icons.visibility : Icons.visibility_off,
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   _buildPasswordRules(),
                   const SizedBox(height: 12),
                   _buildInput(
-                      label: 'Confirm Password',
-                      controller: _confirmController,
-                      hint: 'Confirm Password',
-                      errorText: _confirmError,
-                      obscure: _obscure,
-                      onChanged: (_) {
-                        if (_confirmError != null) {
-                          setState(() => _confirmError = null);
-                        }
-                      },
-                      suffix: IconButton(
-                          onPressed: () => setState(() => _obscure = !_obscure),
-                          icon: Icon(_obscure
-                              ? Icons.visibility
-                              : Icons.visibility_off))),
+                    label: 'Confirm Password',
+                    controller: _confirmController,
+                    hint: 'Confirm Password',
+                    errorText: _confirmError,
+                    obscure: _obscure,
+                    onChanged: (_) {
+                      if (_confirmError != null) {
+                        setState(() => _confirmError = null);
+                      }
+                    },
+                    suffix: IconButton(
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                      icon: Icon(
+                        _obscure ? Icons.visibility : Icons.visibility_off,
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.lightBlue.shade300,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12))),
+                        backgroundColor: Colors.lightBlue.shade300,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       onPressed: () async {
                         final email = _emailController.text.trim();
                         final password = _passwordController.text;
                         final notifications = Provider.of<NotificationService>(
-                            context,
-                            listen: false);
+                          context,
+                          listen: false,
+                        );
 
                         if (!_validateStep1()) {
                           notifications.showWarning(
-                              'Please correct the highlighted fields');
+                            'Please correct the highlighted fields',
+                          );
                           return;
                         }
 
                         showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (_) => const Center(
-                                child: CircularProgressIndicator()));
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (_) =>
+                              const Center(child: CircularProgressIndicator()),
+                        );
 
                         try {
-                          final auth =
-                              Provider.of<AuthProvider>(context, listen: false);
-                          final res =
-                              await auth.api.requestRegistrationOtp(email);
+                          final auth = Provider.of<AuthProvider>(
+                            context,
+                            listen: false,
+                          );
+                          final res = await auth.api.requestRegistrationOtp(
+                            email,
+                          );
 
                           Navigator.of(context).pop();
 
                           if (res['success'] == 1) {
                             notifications.showSuccess(
-                                'Verification code sent to $email.');
-                            Navigator.of(context).push(MaterialPageRoute(
+                              'Verification code sent to $email.',
+                            );
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
                                 builder: (_) => SignUpStep2(
-                                      email: email,
-                                      password: password,
-                                    )));
+                                  email: email,
+                                  password: password,
+                                ),
+                              ),
+                            );
                             return;
                           }
 
                           notifications.showError(
-                              NotificationService.formatMessage(
-                                  res['message'] ??
-                                      'Failed to send verification code'));
+                            NotificationService.formatMessage(
+                              res['message'] ??
+                                  'Failed to send verification code',
+                            ),
+                          );
                         } catch (e) {
                           Navigator.of(context).pop();
-                          notifications
-                              .showError(NotificationService.formatMessage(e));
+                          notifications.showError(
+                            NotificationService.formatMessage(e),
+                          );
                         }
                       },
-                      child: const Text('Sign up',
-                          style: TextStyle(fontSize: 18, color: Colors.white)),
+                      child: const Text(
+                        'Sign up',
+                        style: TextStyle(fontSize: 18, color: Colors.white),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
                   Center(
                     child: TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text.rich(TextSpan(children: [
+                      child: const Text.rich(
                         TextSpan(
-                            text: 'Already have an account? ',
-                            style: TextStyle(color: Colors.grey)),
-                        TextSpan(
-                            text: 'Log in',
-                            style: TextStyle(color: Colors.black))
-                      ])),
+                          children: [
+                            TextSpan(
+                              text: 'Already have an account? ',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                            TextSpan(
+                              text: 'Log in',
+                              style: TextStyle(color: Colors.black),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -278,15 +315,16 @@ class _SignUpStep1State extends State<SignUpStep1> {
     );
   }
 
-  Widget _buildInput(
-      {required String label,
-      required TextEditingController controller,
-      String? hint,
-      String? errorText,
-      TextInputType? keyboardType,
-      ValueChanged<String>? onChanged,
-      bool obscure = false,
-      Widget? suffix}) {
+  Widget _buildInput({
+    required String label,
+    required TextEditingController controller,
+    String? hint,
+    String? errorText,
+    TextInputType? keyboardType,
+    ValueChanged<String>? onChanged,
+    bool obscure = false,
+    Widget? suffix,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -294,26 +332,32 @@ class _SignUpStep1State extends State<SignUpStep1> {
         const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: errorText == null
-                      ? Colors.grey.shade200
-                      : Colors.red.shade400)),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: errorText == null
+                  ? Colors.grey.shade200
+                  : Colors.red.shade400,
+            ),
+          ),
           child: TextField(
-              controller: controller,
-              keyboardType: keyboardType,
-              onChanged: onChanged,
-              obscureText: obscure,
-              decoration: InputDecoration(
-                  hintText: hint,
-                  hintStyle: const TextStyle(
-                    color: Colors.black54,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                  suffixIcon: suffix)),
+            controller: controller,
+            keyboardType: keyboardType,
+            onChanged: onChanged,
+            obscureText: obscure,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: const TextStyle(
+                color: Colors.black54,
+                fontWeight: FontWeight.w500,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 14,
+              ),
+              suffixIcon: suffix,
+            ),
+          ),
         ),
         if (errorText != null) ...[
           const SizedBox(height: 6),
@@ -345,25 +389,28 @@ class _SignUpStep1State extends State<SignUpStep1> {
     };
 
     return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: rules.entries
-            .map((e) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: Row(children: [
-                    Icon(
-                      e.value
-                          ? Icons.check_circle
-                          : Icons.radio_button_unchecked,
-                      size: 18,
-                      color: e.value ? Colors.green : Colors.grey,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                        child:
-                            Text(e.key, style: const TextStyle(fontSize: 12)))
-                  ]),
-                ))
-            .toList());
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: rules.entries
+          .map(
+            (e) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Row(
+                children: [
+                  Icon(
+                    e.value ? Icons.check_circle : Icons.radio_button_unchecked,
+                    size: 18,
+                    color: e.value ? Colors.green : Colors.grey,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(e.key, style: const TextStyle(fontSize: 12)),
+                  ),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+    );
   }
 
   List<String> _unmetRules(String password, String email) {

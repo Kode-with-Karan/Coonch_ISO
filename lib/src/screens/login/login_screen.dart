@@ -66,7 +66,8 @@ class _LoginScreenState extends State<LoginScreen> {
           Navigator.of(context).pop();
         } else {
           Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const HomeScreen()));
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
         }
       }
     });
@@ -75,52 +76,61 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: EdgeInsets.fromLTRB(
-              20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 16),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
           child: Center(
             child: ConstrainedBox(
-              constraints:
-                  BoxConstraints(maxWidth: kIsWeb ? 560 : double.infinity),
+              constraints: const BoxConstraints(
+                maxWidth: kIsWeb ? 560 : double.infinity,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Center(
-                      child: Column(children: [
-                    SizedBox(height: 4),
-                    Image(
-                        image: AssetImage('assets/icons/app_icon.png'),
-                        height: 96,
-                        fit: BoxFit.contain),
-                    SizedBox(height: 24),
-                  ])),
-                  const Text('Log in',
-                      style:
-                          TextStyle(fontSize: 34, fontWeight: FontWeight.bold)),
+                    child: Column(
+                      children: [
+                        SizedBox(height: 4),
+                        Image(
+                          image: AssetImage('assets/icons/app_icon.png'),
+                          height: 96,
+                          fit: BoxFit.contain,
+                        ),
+                        SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                  const Text(
+                    'Log in',
+                    style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
-                  const Text('Enter your details and Log in',
-                      style: TextStyle(fontSize: 16, color: Colors.black54)),
+                  const Text(
+                    'Enter your details and Log in',
+                    style: TextStyle(fontSize: 16, color: Colors.black54),
+                  ),
                   const SizedBox(height: 24),
                   _buildInput(
-                      label: 'Username or Email',
-                      controller: _emailController,
-                      hint: 'Username or email'),
+                    label: 'Username or Email',
+                    controller: _emailController,
+                    hint: 'Username or email',
+                  ),
                   const SizedBox(height: 12),
                   _buildInput(
-                      label: 'Password',
-                      controller: _passwordController,
-                      hint: 'Password',
-                      obscure: _obscure,
-                      suffix: IconButton(
-                          icon: Icon(_obscure
-                              ? Icons.visibility
-                              : Icons.visibility_off),
-                          onPressed: () =>
-                              setState(() => _obscure = !_obscure))),
+                    label: 'Password',
+                    controller: _passwordController,
+                    hint: 'Password',
+                    obscure: _obscure,
+                    suffix: IconButton(
+                      icon: Icon(
+                        _obscure ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -130,26 +140,36 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: 22,
                           height: 22,
                           decoration: BoxDecoration(
-                              color: _keepSigned
-                                  ? Colors.lightBlue
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: Colors.grey.shade300)),
+                            color: _keepSigned
+                                ? Colors.lightBlue
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
                           child: _keepSigned
-                              ? const Icon(Icons.check,
-                                  size: 16, color: Colors.white)
+                              ? const Icon(
+                                  Icons.check,
+                                  size: 16,
+                                  color: Colors.white,
+                                )
                               : null,
                         ),
                       ),
                       const SizedBox(width: 8),
                       const Expanded(
-                          child: Text('Keep me signed in',
-                              style: TextStyle(color: Colors.grey))),
+                        child: Text(
+                          'Keep me signed in',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
                       TextButton(
-                          onPressed: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                  builder: (_) => const ResetPasswordScreen())),
-                          child: const Text('Forgot your password?')),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const ResetPasswordScreen(),
+                          ),
+                        ),
+                        child: const Text('Forgot your password?'),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 18),
@@ -158,21 +178,27 @@ class _LoginScreenState extends State<LoginScreen> {
                     height: 56,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16)),
-                          backgroundColor: Colors.lightBlue),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        backgroundColor: Colors.lightBlue,
+                      ),
                       onPressed: () async {
-                        final auth =
-                            Provider.of<AuthProvider>(context, listen: false);
+                        final auth = Provider.of<AuthProvider>(
+                          context,
+                          listen: false,
+                        );
                         final notifications = Provider.of<NotificationService>(
-                            context,
-                            listen: false);
+                          context,
+                          listen: false,
+                        );
                         final input = _emailController.text.trim();
                         final password = _passwordController.text;
 
                         if (input.isEmpty || password.isEmpty) {
                           notifications.showWarning(
-                              'Please enter email/username and password');
+                            'Please enter email/username and password',
+                          );
                           return;
                         }
 
@@ -180,14 +206,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         String identifierToSend = input;
                         try {
                           final phoneOnly = input.replaceAll(RegExp(r'\D'), '');
-                          final looksLikeNumber = RegExp(r'^\+?\d{6,}$')
-                                  .hasMatch(input) ||
+                          final looksLikeNumber =
+                              RegExp(r'^\+?\d{6,}$').hasMatch(input) ||
                               (phoneOnly.isNotEmpty && phoneOnly.length >= 6);
                           if (looksLikeNumber) {
                             final prefs = await SharedPreferences.getInstance();
                             // Try exact input first, then digits-only
-                            final mapped = prefs
-                                    .getString('phone_to_username:$input') ??
+                            final mapped =
+                                prefs.getString('phone_to_username:$input') ??
                                 prefs.getString('phone_to_username:$phoneOnly');
                             if (mapped != null && mapped.isNotEmpty) {
                               identifierToSend = mapped;
@@ -196,35 +222,43 @@ class _LoginScreenState extends State<LoginScreen> {
                         } catch (_) {}
 
                         showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (_) => const Center(
-                                child: CircularProgressIndicator()));
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (_) =>
+                              const Center(child: CircularProgressIndicator()),
+                        );
 
                         try {
-                          final res =
-                              await auth.login(identifierToSend, password);
+                          final res = await auth.login(
+                            identifierToSend,
+                            password,
+                          );
                           Navigator.of(context).pop(); // remove progress dialog
 
                           if (res['success'] == 1) {
                             // Check whether profile appears complete; if not,
                             // send user to EditProfileScreen to collect username/phone.
                             final user = auth.user ?? {};
-                            final username =
-                                (user['username'] ?? '').toString();
+                            final username = (user['username'] ?? '')
+                                .toString();
                             final phone = (user['phone'] ?? '').toString();
                             final needsProfile =
                                 username.isEmpty || phone.isEmpty;
 
                             if (needsProfile) {
                               Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                      builder: (_) => const EditProfileScreen(
-                                          requireComplete: true)));
+                                MaterialPageRoute(
+                                  builder: (_) => const EditProfileScreen(
+                                    requireComplete: true,
+                                  ),
+                                ),
+                              );
                             } else {
                               Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                      builder: (_) => const HomeScreen()));
+                                MaterialPageRoute(
+                                  builder: (_) => const HomeScreen(),
+                                ),
+                              );
                             }
 
                             return;
@@ -233,12 +267,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           notifications.showError(_resolveLoginMessage(res));
                         } catch (e) {
                           Navigator.of(context).pop();
-                          notifications
-                              .showError(NotificationService.formatMessage(e));
+                          notifications.showError(
+                            NotificationService.formatMessage(e),
+                          );
                         }
                       },
-                      child: const Text('Log in',
-                          style: TextStyle(fontSize: 18, color: Colors.white)),
+                      child: const Text(
+                        'Log in',
+                        style: TextStyle(fontSize: 18, color: Colors.white),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 28),
@@ -246,18 +283,25 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       children: [
                         Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text("Don't have an account? ",
-                                  style: TextStyle(color: Colors.grey)),
-                              TextButton(
-                                  onPressed: () => Navigator.of(context)
-                                      .pushNamed('/signup/1'),
-                                  child: const Text('Sign up',
-                                      style: TextStyle(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.bold)))
-                            ]),
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "Don't have an account? ",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.of(context).pushNamed('/signup/1'),
+                              child: const Text(
+                                'Sign up',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -290,7 +334,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ],
-                        )
+                        ),
                       ],
                     ),
                   ),
@@ -304,12 +348,13 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildInput(
-      {required String label,
-      required TextEditingController controller,
-      String? hint,
-      bool obscure = false,
-      Widget? suffix}) {
+  Widget _buildInput({
+    required String label,
+    required TextEditingController controller,
+    String? hint,
+    bool obscure = false,
+    Widget? suffix,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -326,14 +371,18 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             filled: true,
             fillColor: Colors.white,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 18,
+            ),
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: Colors.grey.shade200)),
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: Colors.grey.shade200),
+            ),
             enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: Colors.grey.shade200)),
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: Colors.grey.shade200),
+            ),
             suffixIcon: suffix,
           ),
         ),
@@ -346,10 +395,13 @@ class _LoginScreenState extends State<LoginScreen> {
       width: 68,
       height: 68,
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
       child: IconButton(
-          onPressed: () {}, icon: Icon(icon, size: 30, color: Colors.grey)),
+        onPressed: () {},
+        icon: Icon(icon, size: 30, color: Colors.grey),
+      ),
     );
   }
 }

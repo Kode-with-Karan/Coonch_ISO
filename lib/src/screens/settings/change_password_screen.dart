@@ -26,7 +26,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     'abc123',
     '111111',
     '123123',
-    'password1'
+    'password1',
   ];
 
   @override
@@ -38,8 +38,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   }
 
   void _change() {
-    final notifications =
-        Provider.of<NotificationService>(context, listen: false);
+    final notifications = Provider.of<NotificationService>(
+      context,
+      listen: false,
+    );
     final current = _currentController.text;
     final password = _newController.text;
     final confirm = _confirmController.text;
@@ -49,8 +51,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       return;
     }
     if (password == current) {
-      notifications
-          .showWarning('New password must be different from current password');
+      notifications.showWarning(
+        'New password must be different from current password',
+      );
       return;
     }
     if (password != confirm) {
@@ -64,124 +67,155 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     }
     final auth = Provider.of<AuthProvider>(context, listen: false);
     showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(child: CircularProgressIndicator()));
-    auth.updatePassword(current, _newController.text).then((res) {
-      Navigator.of(context).pop();
-      if (res['success'] == 1) {
-        notifications.showSuccess('Password changed');
-        Navigator.of(context).pop();
-        return;
-      }
-      notifications.showError(NotificationService.formatMessage(
-          res['message'] ?? 'Failed to change password'));
-    }).catchError((e) {
-      Navigator.of(context).pop();
-      notifications.showError(NotificationService.formatMessage(e));
-    });
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    auth
+        .updatePassword(current, _newController.text)
+        .then((res) {
+          Navigator.of(context).pop();
+          if (res['success'] == 1) {
+            notifications.showSuccess('Password changed');
+            Navigator.of(context).pop();
+            return;
+          }
+          notifications.showError(
+            NotificationService.formatMessage(
+              res['message'] ?? 'Failed to change password',
+            ),
+          );
+        })
+        .catchError((e) {
+          Navigator.of(context).pop();
+          notifications.showError(NotificationService.formatMessage(e));
+        });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
-            onPressed: () => Navigator.of(context).maybePop(),
-            icon: const Icon(Icons.arrow_back_ios)),
-        title: const Text('Change Password',
-            style: TextStyle(color: Colors.black)),
+          onPressed: () => Navigator.of(context).maybePop(),
+          icon: const Icon(Icons.arrow_back_ios),
+        ),
+        title: const Text(
+          'Change Password',
+          style: TextStyle(color: Colors.black),
+        ),
         centerTitle: true,
       ),
       body: Padding(
-        padding: EdgeInsets.fromLTRB(
-            20, 24, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
         child: SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          child: Column(children: [
-            TextField(
-              controller: _currentController,
-              obscureText: _obscure,
-              decoration: InputDecoration(
-                hintText: 'Current Password',
-                filled: true,
-                fillColor: Colors.white,
-                suffixIcon: IconButton(
+          child: Column(
+            children: [
+              TextField(
+                controller: _currentController,
+                obscureText: _obscure,
+                decoration: InputDecoration(
+                  hintText: 'Current Password',
+                  filled: true,
+                  fillColor: Colors.white,
+                  suffixIcon: IconButton(
                     onPressed: () => setState(() => _obscure = !_obscure),
                     icon: Icon(
-                        _obscure ? Icons.visibility : Icons.visibility_off)),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                border: OutlineInputBorder(
+                      _obscure ? Icons.visibility : Icons.visibility_off,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 18,
+                  ),
+                  border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade200)),
-                enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade200)),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _newController,
-              obscureText: _obscure,
-              decoration: InputDecoration(
-                hintText: 'New Password',
-                filled: true,
-                fillColor: Colors.white,
-                suffixIcon: IconButton(
+              const SizedBox(height: 12),
+              TextField(
+                controller: _newController,
+                obscureText: _obscure,
+                decoration: InputDecoration(
+                  hintText: 'New Password',
+                  filled: true,
+                  fillColor: Colors.white,
+                  suffixIcon: IconButton(
                     onPressed: () => setState(() => _obscure = !_obscure),
                     icon: Icon(
-                        _obscure ? Icons.visibility : Icons.visibility_off)),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                border: OutlineInputBorder(
+                      _obscure ? Icons.visibility : Icons.visibility_off,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 18,
+                  ),
+                  border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade200)),
-                enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade200)),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                ),
+                onChanged: (_) => setState(() {}),
               ),
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 8),
-            _buildPasswordRules(),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _confirmController,
-              obscureText: _obscure,
-              decoration: InputDecoration(
-                hintText: 'Confirm Password',
-                filled: true,
-                fillColor: Colors.white,
-                suffixIcon: IconButton(
+              const SizedBox(height: 8),
+              _buildPasswordRules(),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _confirmController,
+                obscureText: _obscure,
+                decoration: InputDecoration(
+                  hintText: 'Confirm Password',
+                  filled: true,
+                  fillColor: Colors.white,
+                  suffixIcon: IconButton(
                     onPressed: () => setState(() => _obscure = !_obscure),
                     icon: Icon(
-                        _obscure ? Icons.visibility : Icons.visibility_off)),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                border: OutlineInputBorder(
+                      _obscure ? Icons.visibility : Icons.visibility_off,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 18,
+                  ),
+                  border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade200)),
-                enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade200)),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 18),
-            SizedBox(
-              width: double.infinity,
-              child: AccentButton(
-                height: 54,
-                onPressed: _change,
-                child: const Text('Change Password',
-                    style: TextStyle(fontSize: 16)),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                child: AccentButton(
+                  height: 54,
+                  onPressed: _change,
+                  child: const Text(
+                    'Change Password',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
               ),
-            ),
-          ]),
+            ],
+          ),
         ),
       ),
     );
@@ -201,25 +235,28 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     };
 
     return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: rules.entries
-            .map((e) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: Row(children: [
-                    Icon(
-                      e.value
-                          ? Icons.check_circle
-                          : Icons.radio_button_unchecked,
-                      size: 18,
-                      color: e.value ? Colors.green : Colors.grey,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                        child:
-                            Text(e.key, style: const TextStyle(fontSize: 12)))
-                  ]),
-                ))
-            .toList());
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: rules.entries
+          .map(
+            (e) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Row(
+                children: [
+                  Icon(
+                    e.value ? Icons.check_circle : Icons.radio_button_unchecked,
+                    size: 18,
+                    color: e.value ? Colors.green : Colors.grey,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(e.key, style: const TextStyle(fontSize: 12)),
+                  ),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+    );
   }
 
   List<String> _unmetRules(String password) {

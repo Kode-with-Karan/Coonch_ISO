@@ -336,7 +336,7 @@ class ApiService {
   /// On success persists token automatically.
   Future<Map<String, dynamic>> login(
       {required String username, required String password}) async {
-    Future<Map<String, dynamic>> _send(String path) async {
+    Future<Map<String, dynamic>> send(String path) async {
       return await postJson(
           path,
           {
@@ -347,7 +347,7 @@ class ApiService {
           omitAuth: true);
     }
 
-    Future<void> _persistTokenIfPresent(Map<String, dynamic> res) async {
+    Future<void> persistTokenIfPresent(Map<String, dynamic> res) async {
       String? token;
       try {
         token = (res['data'] ?? {})['token'] as String?;
@@ -361,28 +361,28 @@ class ApiService {
       }
     }
 
-    bool _hasSuccessEnvelope(Map<String, dynamic> res) =>
+    bool hasSuccessEnvelope(Map<String, dynamic> res) =>
         res.containsKey('success');
 
-    bool _isSuccess(Map<String, dynamic> res) {
+    bool isSuccess(Map<String, dynamic> res) {
       if (res['success'] == 1 || res['success'] == true) return true;
       final directAccess = res['access'];
       return directAccess is String && directAccess.isNotEmpty;
     }
 
     // Prefer user/login path.
-    final primary = await _send('api/v1/user/login/');
-    if (_isSuccess(primary)) {
-      await _persistTokenIfPresent(primary);
+    final primary = await send('api/v1/user/login/');
+    if (isSuccess(primary)) {
+      await persistTokenIfPresent(primary);
       return primary;
     }
 
     // If the primary response isn't in the expected API envelope,
     // try the auth/login fallback endpoint.
-    if (!_hasSuccessEnvelope(primary)) {
-      final fallback = await _send('api/v1/auth/login/');
-      if (_isSuccess(fallback)) {
-        await _persistTokenIfPresent(fallback);
+    if (!hasSuccessEnvelope(primary)) {
+      final fallback = await send('api/v1/auth/login/');
+      if (isSuccess(fallback)) {
+        await persistTokenIfPresent(fallback);
       }
       return fallback;
     }

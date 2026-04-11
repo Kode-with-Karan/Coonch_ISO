@@ -150,7 +150,7 @@ class _AllSeriesScreenState extends State<AllSeriesScreen> {
               decoration: BoxDecoration(
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(16)),
-                color: AppTheme.primary.withOpacity(0.2),
+                color: AppTheme.primary.withValues(alpha: 0.2),
               ),
               child: Stack(
                 children: [
@@ -167,7 +167,7 @@ class _AllSeriesScreenState extends State<AllSeriesScreen> {
                           child: Icon(
                             Icons.play_circle_fill,
                             size: 48,
-                            color: AppTheme.primary.withOpacity(0.6),
+                            color: AppTheme.primary.withValues(alpha: 0.6),
                           ),
                         ),
                       ),
@@ -177,7 +177,7 @@ class _AllSeriesScreenState extends State<AllSeriesScreen> {
                       child: Icon(
                         Icons.play_circle_fill,
                         size: 48,
-                        color: AppTheme.primary.withOpacity(0.6),
+                        color: AppTheme.primary.withValues(alpha: 0.6),
                       ),
                     ),
                   Positioned(
@@ -237,7 +237,7 @@ class _AllSeriesScreenState extends State<AllSeriesScreen> {
                       children: [
                         CircleAvatar(
                           radius: 12,
-                          backgroundColor: AppTheme.primary.withOpacity(0.2),
+                          backgroundColor: AppTheme.primary.withValues(alpha: 0.2),
                           child: Text(
                             creatorName.isNotEmpty
                                 ? creatorName[0].toUpperCase()

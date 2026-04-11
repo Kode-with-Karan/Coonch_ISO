@@ -212,7 +212,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
               decoration: BoxDecoration(
                 borderRadius:
                     const BorderRadius.horizontal(left: Radius.circular(16)),
-                color: AppTheme.primary.withOpacity(0.1),
+                color: AppTheme.primary.withValues(alpha: 0.1),
               ),
               child: Stack(
                 children: [
@@ -228,14 +228,14 @@ class _WishlistScreenState extends State<WishlistScreen> {
                         errorBuilder: (_, __, ___) => Center(
                           child: Icon(typeIcon,
                               size: 40,
-                              color: AppTheme.primary.withOpacity(0.5)),
+                              color: AppTheme.primary.withValues(alpha: 0.5)),
                         ),
                       ),
                     )
                   else
                     Center(
                       child: Icon(typeIcon,
-                          size: 40, color: AppTheme.primary.withOpacity(0.5)),
+                          size: 40, color: AppTheme.primary.withValues(alpha: 0.5)),
                     ),
                   Positioned(
                     bottom: 4,
@@ -285,7 +285,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.1),
+                              color: Colors.green.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -302,7 +302,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppTheme.primary.withOpacity(0.1),
+                              color: AppTheme.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(

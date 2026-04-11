@@ -42,8 +42,9 @@ const Map<String, _ContentTypeMeta> _typeMeta = {
 _ContentTypeMeta _metaForType(String type) {
   final key = type.toLowerCase();
   if (_typeMeta.containsKey(key)) return _typeMeta[key]!;
-  final label =
-      key.isEmpty ? 'Other' : '${key[0].toUpperCase()}${key.substring(1)}';
+  final label = key.isEmpty
+      ? 'Other'
+      : '${key[0].toUpperCase()}${key.substring(1)}';
   return _ContentTypeMeta(
     label: label,
     icon: Icons.play_circle_outline,
@@ -86,8 +87,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   bool _isVideoInitializing = false;
   bool _hasAwardedPoints = false;
 
-  Future<T?> _pushPageDeferred<T>(Widget page,
-      {bool replace = false, bool fullscreenDialog = false}) {
+  Future<T?> _pushPageDeferred<T>(
+    Widget page, {
+    bool replace = false,
+    bool fullscreenDialog = false,
+  }) {
     return Future<T?>.microtask(() {
       if (!mounted) return null;
       final route = MaterialPageRoute<T>(
@@ -105,13 +109,17 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    debugPrint(
+      '[course_detail_screen.dart][COURSE_DETAIL] Opened: courseId=${widget.courseId} title=${widget.courseTitle}',
+    );
   }
 
-  void _openContentItem(
-      {required String itemId,
-      required String title,
-      required String duration,
-      required String price}) {
+  void _openContentItem({
+    required String itemId,
+    required String title,
+    required String duration,
+    required String price,
+  }) {
     if (itemId.isEmpty) return;
     _pushPageDeferred<void>(
       CourseDetailScreen(
@@ -127,6 +135,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
 
   Future<void> _loadCourseDetails() async {
     if (!mounted) return;
+    debugPrint(
+      '[course_detail_screen.dart][COURSE_DETAIL] Loading details for courseId=${widget.courseId}',
+    );
     setState(() {
       _loading = true;
       _hasTriedLoadingDetails = true;
@@ -139,19 +150,36 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       final contentData = details['data'] ?? details;
 
       // Debug: Print access-related fields
-      print('[COURSE_DETAIL] Loaded content:');
-      print('  id: ${contentData['id']}');
-      print('  is_premium: ${contentData['is_premium']}');
-      print('  can_access: ${contentData['can_access']}');
-      print('  access_reason: ${contentData['access_reason']}');
-      print('  free: ${contentData['free']}');
-      print('  price: ${contentData['price']}');
-      print('  active_subscription: ${contentData['active_subscription']}');
+      print('[course_detail_screen.dart][COURSE_DETAIL] Loaded content:');
+      print(
+        '[course_detail_screen.dart][COURSE_DETAIL]   id: ${contentData['id']}',
+      );
+      print(
+        '[course_detail_screen.dart][COURSE_DETAIL]   is_premium: ${contentData['is_premium']}',
+      );
+      print(
+        '[course_detail_screen.dart][COURSE_DETAIL]   can_access: ${contentData['can_access']}',
+      );
+      print(
+        '[course_detail_screen.dart][COURSE_DETAIL]   access_reason: ${contentData['access_reason']}',
+      );
+      print(
+        '[course_detail_screen.dart][COURSE_DETAIL]   free: ${contentData['free']}',
+      );
+      print(
+        '[course_detail_screen.dart][COURSE_DETAIL]   price: ${contentData['price']}',
+      );
+      print(
+        '[course_detail_screen.dart][COURSE_DETAIL]   active_subscription: ${contentData['active_subscription']}',
+      );
 
       setState(() {
         _courseDetails = contentData;
         _loading = false;
       });
+      debugPrint(
+        '[course_detail_screen.dart][COURSE_DETAIL] Details loaded successfully',
+      );
 
       if (canAccessContent(contentData)) {
         try {
@@ -181,7 +209,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         }
       }
     } catch (e) {
-      print('Error loading course details: $e');
+      debugPrint(
+        '[course_detail_screen.dart][COURSE_DETAIL] Error loading course details: $e',
+      );
       if (!mounted) return;
       setState(() => _loading = false);
     }
@@ -194,11 +224,17 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     final courseId = widget.courseId;
     if (courseId == null || courseId.isEmpty) return false;
 
+    debugPrint(
+      '[course_detail_screen.dart][COURSE_DETAIL] Triggered lazy load from Play button',
+    );
     await _loadCourseDetails();
     return _courseDetails != null;
   }
 
   Future<void> _loadSeriesItems(String seriesId) async {
+    debugPrint(
+      '[course_detail_screen.dart][COURSE_DETAIL] Loading sibling series items: seriesId=$seriesId',
+    );
     setState(() => _loadingSeriesItems = true);
     try {
       final api = Provider.of<ApiService>(context, listen: false);
@@ -211,22 +247,28 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         _loadingSeriesItems = false;
       });
     } catch (e) {
-      print('Error loading series items: $e');
+      debugPrint(
+        '[course_detail_screen.dart][COURSE_DETAIL] Error loading series items: $e',
+      );
       if (!mounted) return;
       setState(() => _loadingSeriesItems = false);
     }
   }
 
   Future<void> _openFullScreenVideo() async {
+    debugPrint(
+      '[course_detail_screen.dart][COURSE_DETAIL] Play tapped for video',
+    );
     if (isLockedContent(_courseDetails)) {
       _openSubscriptionPlans();
       return;
     }
 
-    final fileUrl = (_courseDetails?['file_url'] ??
-            _courseDetails?['file'] ??
-            _courseDetails?['video_url'])
-        ?.toString();
+    final fileUrl =
+        (_courseDetails?['file_url'] ??
+                _courseDetails?['file'] ??
+                _courseDetails?['video_url'])
+            ?.toString();
     if (fileUrl == null || fileUrl.isEmpty) return;
 
     if (_videoController == null || !_isVideoInitialized) {
@@ -244,9 +286,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       } catch (e) {
         if (mounted) {
           setState(() => _isVideoInitializing = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to load video: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Failed to load video: $e')));
         }
         return;
       }
@@ -305,15 +347,17 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content:
-            Text(_isWishlisted ? 'Added to wishlist' : 'Removed from wishlist'),
+        content: Text(
+          _isWishlisted ? 'Added to wishlist' : 'Removed from wishlist',
+        ),
         duration: const Duration(seconds: 1),
       ),
     );
   }
 
   void _shareContent() {
-    final title = _courseDetails?['title'] ??
+    final title =
+        _courseDetails?['title'] ??
         _courseDetails?['caption'] ??
         'Check out this content';
     final contentId = widget.courseId ?? '';
@@ -359,8 +403,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     final index = _selectedTabIndex.clamp(0, available.length - 1);
     final selectedType = available[index];
     return _seriesItems
-        .where((item) =>
-            (item['type'] ?? '').toString().toLowerCase() == selectedType)
+        .where(
+          (item) =>
+              (item['type'] ?? '').toString().toLowerCase() == selectedType,
+        )
         .toList();
   }
 
@@ -392,10 +438,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
               ),
               Text(
                 '${_seriesItems.length} items',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -445,22 +488,26 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                           ),
                         ),
                         margin: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 6),
+                          horizontal: 4,
+                          vertical: 6,
+                        ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(meta.icon,
-                                size: 18,
-                                color:
-                                    isSelected ? meta.color : Colors.grey[600]),
+                            Icon(
+                              meta.icon,
+                              size: 18,
+                              color: isSelected ? meta.color : Colors.grey[600],
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               meta.label,
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color:
-                                    isSelected ? meta.color : Colors.grey[700],
+                                color: isSelected
+                                    ? meta.color
+                                    : Colors.grey[700],
                               ),
                             ),
                           ],
@@ -552,10 +599,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                 children: [
                   Text(
                     'Episode ${index + 1}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -594,8 +638,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                   color: AppTheme.primary,
                   shape: BoxShape.circle,
                 ),
-                child:
-                    const Icon(Icons.play_arrow, color: Colors.white, size: 16),
+                child: const Icon(
+                  Icons.play_arrow,
+                  color: Colors.white,
+                  size: 16,
+                ),
               )
             else
               Icon(Icons.chevron_right, color: Colors.grey[400]),
@@ -640,52 +687,53 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ((_courseDetails == null && _hasTriedLoadingDetails)
-              ? const Center(child: Text('Content not found'))
-              : Column(
-                  children: [
-                    // Debug: Access state indicator (remove in production)
-                    _buildDebugAccessInfo(),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildMediaSection(),
-                            if (_courseDetails == null) ...[
-                              const SizedBox(height: 16),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 24),
-                                child: Text(
-                                  'Tap Play below to load this content.',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
+                ? const Center(child: Text('Content not found'))
+                : Column(
+                    children: [
+                      // Debug: Access state indicator (remove in production)
+                      _buildDebugAccessInfo(),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildMediaSection(),
+                              if (_courseDetails == null) ...[
+                                const SizedBox(height: 16),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                  ),
+                                  child: Text(
+                                    'Tap Play below to load this content.',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
+                              const SizedBox(height: 24),
+                              _buildTitleSection(),
+                              const SizedBox(height: 12),
+                              _buildMetadataSection(),
+                              if (isLockedContent(_courseDetails)) ...[
+                                const SizedBox(height: 20),
+                                _buildLockedAccessNotice(),
+                              ],
+                              const SizedBox(height: 24),
+                              _buildAboutSection(),
+                              if (_seriesItems.length > 1) ...[
+                                const SizedBox(height: 32),
+                                _buildSeriesItemsSection(),
+                              ],
+                              const SizedBox(height: 40),
                             ],
-                            const SizedBox(height: 24),
-                            _buildTitleSection(),
-                            const SizedBox(height: 12),
-                            _buildMetadataSection(),
-                            if (isLockedContent(_courseDetails)) ...[
-                              const SizedBox(height: 20),
-                              _buildLockedAccessNotice(),
-                            ],
-                            const SizedBox(height: 24),
-                            _buildAboutSection(),
-                            if (_seriesItems.length > 1) ...[
-                              const SizedBox(height: 32),
-                              _buildSeriesItemsSection(),
-                            ],
-                            const SizedBox(height: 40),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                )),
+                    ],
+                  )),
       bottomNavigationBar: _buildBottomBar(),
     );
   }
@@ -720,15 +768,17 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     }
 
     final type = (_courseDetails?['type'] ?? '').toString().toLowerCase();
-    final fileUrl = (_courseDetails?['file_url'] ??
-            _courseDetails?['file'] ??
-            _courseDetails?['video_url'])
-        ?.toString();
+    final fileUrl =
+        (_courseDetails?['file_url'] ??
+                _courseDetails?['file'] ??
+                _courseDetails?['video_url'])
+            ?.toString();
     final audioUrl = (_courseDetails?['audio_url'] ?? fileUrl)?.toString();
-    final thumb = (_courseDetails?['thumbnail_url'] ??
-            _courseDetails?['thumbnail'] ??
-            _courseDetails?['image_url'])
-        ?.toString();
+    final thumb =
+        (_courseDetails?['thumbnail_url'] ??
+                _courseDetails?['thumbnail'] ??
+                _courseDetails?['image_url'])
+            ?.toString();
 
     if (type == 'video' && fileUrl != null && fileUrl.isNotEmpty) {
       return _buildVideoContent(fileUrl, thumb);
@@ -823,14 +873,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                 ),
                 child: Center(
                   child: _isVideoInitializing
-                      ? const CircularProgressIndicator(
-                          color: AppTheme.primary,
-                        )
-                      : Icon(
-                          meta.icon,
-                          size: 80,
-                          color: AppTheme.primary,
-                        ),
+                      ? const CircularProgressIndicator(color: AppTheme.primary)
+                      : Icon(meta.icon, size: 80, color: AppTheme.primary),
                 ),
               ),
             ),
@@ -840,10 +884,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Text(
             'Tap to watch video',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
         ),
       ],
@@ -868,11 +909,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                   strokeWidth: 3,
                 ),
               )
-            : const Icon(
-                Icons.play_arrow,
-                size: 50,
-                color: Colors.white,
-              ),
+            : const Icon(Icons.play_arrow, size: 50, color: Colors.white),
       ),
     );
   }
@@ -1117,10 +1154,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
             const SizedBox(height: 8),
             Text(
               'No preview available',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           ],
         ),
@@ -1145,19 +1179,13 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
             const SizedBox(height: 16),
             Text(
               '${requiredPlanTopicLabel(_courseDetails)} content is locked',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
             Text(
               contentAccessMessage(_courseDetails),
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey[700],
-                height: 1.45,
-              ),
+              style: TextStyle(color: Colors.grey[700], height: 1.45),
             ),
           ],
         ),
@@ -1166,7 +1194,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   }
 
   Widget _buildTitleSection() {
-    final title = _courseDetails?['caption'] ??
+    final title =
+        _courseDetails?['caption'] ??
         _courseDetails?['title'] ??
         widget.courseTitle ??
         '';
@@ -1236,14 +1265,17 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
 
   Widget _buildMetadataSection() {
     // Check multiple possible field names for duration
-    final durationRaw = _courseDetails?['duration'] ??
+    final durationRaw =
+        _courseDetails?['duration'] ??
         _courseDetails?['duration_seconds'] ??
         widget.duration ??
         '';
     final duration = _formatDuration(durationRaw);
     final owner = _courseDetails?['user'] ?? _courseDetails?['creator'];
-    final priceLabel =
-        _contentPriceLabel(_courseDetails, fallback: widget.price);
+    final priceLabel = _contentPriceLabel(
+      _courseDetails,
+      fallback: widget.price,
+    );
     final hasPaidPrice = priceLabel != 'Free';
 
     return Padding(
@@ -1272,10 +1304,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
                       ? (owner['name'] ?? owner['username'])?.toString() ?? ''
                       : '';
                   _pushPageDeferred<void>(
-                    TeacherProfileScreen(
-                      teacherName: name,
-                      teacherTitle: '',
-                    ),
+                    TeacherProfileScreen(teacherName: name, teacherTitle: ''),
                   );
                 }
               },
@@ -1372,10 +1401,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
             Expanded(
               child: Text(
                 contentAccessMessage(_courseDetails),
-                style: TextStyle(
-                  color: Colors.orange.shade900,
-                  height: 1.4,
-                ),
+                style: TextStyle(color: Colors.orange.shade900, height: 1.4),
               ),
             ),
           ],
@@ -1388,20 +1414,22 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     final locked = isLockedContent(_courseDetails);
     final premium = isPremiumContent(_courseDetails);
     final type = (_courseDetails?['type'] ?? '').toString().toLowerCase();
-    final priceLabel =
-        _contentPriceLabel(_courseDetails, fallback: widget.price);
+    final priceLabel = _contentPriceLabel(
+      _courseDetails,
+      fallback: widget.price,
+    );
     final hasPaidPrice = priceLabel != 'Free';
     final buttonLabel = _courseDetails == null
         ? 'Play'
         : (locked
-            ? lockedActionLabel(_courseDetails)
-            : premium
-                ? hasPaidPrice
+              ? lockedActionLabel(_courseDetails)
+              : premium
+              ? hasPaidPrice
                     ? 'Included in your plan • $priceLabel'
                     : 'Included in your plan'
-                : hasPaidPrice
-                    ? 'Watch for $priceLabel'
-                    : 'Free Watch');
+              : hasPaidPrice
+              ? 'Watch for $priceLabel'
+              : 'Free Watch');
     final buttonColor = locked ? Colors.orange : AppTheme.primary;
 
     return Container(
@@ -1436,8 +1464,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
 
               final loadedLocked = isLockedContent(_courseDetails);
               final loadedPremium = isPremiumContent(_courseDetails);
-              final loadedType =
-                  (_courseDetails?['type'] ?? '').toString().toLowerCase();
+              final loadedType = (_courseDetails?['type'] ?? '')
+                  .toString()
+                  .toLowerCase();
 
               if (loadedLocked) {
                 _openSubscriptionPlans();
@@ -1448,9 +1477,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                      content: Text(loadedPremium
+                    content: Text(
+                      loadedPremium
                           ? 'Content unlocked with your subscription.'
-                          : 'Starting playback...')),
+                          : 'Starting playback...',
+                    ),
+                  ),
                 );
               }
             },

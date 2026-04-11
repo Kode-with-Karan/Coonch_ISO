@@ -94,10 +94,10 @@ class IOSSidebar extends StatelessWidget {
               width: width,
               padding: const EdgeInsets.fromLTRB(24, 42, 20, 26),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.74),
+                color: Colors.white.withValues(alpha: 0.74),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.10),
+                    color: Colors.black.withValues(alpha: 0.10),
                     blurRadius: 26,
                     offset: const Offset(0, 10),
                   ),
@@ -153,10 +153,10 @@ class IOSSidebar extends StatelessWidget {
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(18),
                                     border: Border.all(
-                                        color: Colors.grey.withOpacity(0.25)),
+                                        color: Colors.grey.withValues(alpha: 0.25)),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
+                                        color: Colors.black.withValues(alpha: 0.05),
                                         blurRadius: 8,
                                         offset: const Offset(0, 4),
                                       ),
@@ -215,7 +215,7 @@ class IOSSidebar extends StatelessWidget {
                             borderRadius: BorderRadius.circular(14),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.blue.shade200.withOpacity(0.28),
+                                color: Colors.blue.shade200.withValues(alpha: 0.28),
                                 blurRadius: 18,
                                 offset: const Offset(0, 8),
                               )

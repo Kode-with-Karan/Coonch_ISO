@@ -6,6 +6,7 @@ import '../../widgets/app_navbar.dart';
 import '../../widgets/subscription_dialog.dart';
 import '../../theme.dart';
 import 'course_detail_screen.dart';
+import 'series_detail_screen.dart';
 import 'category_results_screen.dart';
 import '../teacher_profile_screen.dart';
 import 'all_categories.dart';
@@ -47,11 +48,7 @@ class _EducationScreenState extends State<EducationScreen> {
 
   Future<void> _loadData() async {
     try {
-      await Future.wait([
-        _loadCourses(),
-        _loadCategories(),
-        _loadSeries(),
-      ]);
+      await Future.wait([_loadCourses(), _loadCategories(), _loadSeries()]);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -64,14 +61,15 @@ class _EducationScreenState extends State<EducationScreen> {
     if (!mounted) return;
     try {
       final api = Provider.of<ApiService>(context, listen: false);
-      final seriesList =
-          await api.getSeries(queryParams: {'topic': 'education'});
+      final seriesList = await api.getSeries(
+        queryParams: {'topic': 'education'},
+      );
       if (!mounted) return;
       setState(() {
         _series = seriesList;
       });
     } catch (e) {
-      print('Error loading series: $e');
+      print('[education_screen.dart] Error loading series: $e');
     }
   }
 
@@ -80,8 +78,9 @@ class _EducationScreenState extends State<EducationScreen> {
     try {
       final api = Provider.of<ApiService>(context, listen: false);
       // Try education topic first; if none returned, fall back to all content
-      List<dynamic> contents =
-          await api.getContents(queryParams: {'topic': 'education'});
+      List<dynamic> contents = await api.getContents(
+        queryParams: {'topic': 'education'},
+      );
       if (contents.isEmpty) {
         contents = await api.getContents();
       }
@@ -95,7 +94,7 @@ class _EducationScreenState extends State<EducationScreen> {
         _loadingCourses = false;
       });
     } catch (e) {
-      print('Error loading courses: $e');
+      print('[education_screen.dart] Error loading courses: $e');
       if (!mounted) return;
       setState(() {
         _loadingCourses = false;
@@ -113,13 +112,14 @@ class _EducationScreenState extends State<EducationScreen> {
       if (!mounted) return;
       setState(() {
         if (cats.isNotEmpty) {
-          _categories =
-              cats.take(4).toList(); // Take first 4 for horizontal list
+          _categories = cats
+              .take(4)
+              .toList(); // Take first 4 for horizontal list
         }
         _loadingCategories = false;
       });
     } catch (e) {
-      print('Error loading categories: $e');
+      print('[education_screen.dart] Error loading categories: $e');
       if (!mounted) return;
       setState(() {
         _loadingCategories = false;
@@ -147,8 +147,9 @@ class _EducationScreenState extends State<EducationScreen> {
 
     try {
       final api = Provider.of<ApiService>(context, listen: false);
-      final contents =
-          await api.getContents(queryParams: {'topic': 'education'});
+      final contents = await api.getContents(
+        queryParams: {'topic': 'education'},
+      );
       if (!mounted) return;
 
       final lower = text.toLowerCase();
@@ -196,7 +197,7 @@ class _EducationScreenState extends State<EducationScreen> {
         }
       }
     } catch (e) {
-      print('Error getting user name: $e');
+      print('[education_screen.dart] Error getting user name: $e');
     }
     return 'Student';
   }
@@ -300,7 +301,8 @@ class _EducationScreenState extends State<EducationScreen> {
 
       // For video/audio content, show duration
       // Check multiple possible field names
-      final duration = course['duration_seconds'] ??
+      final duration =
+          course['duration_seconds'] ??
           course['duration'] ??
           course['duration_seconds'];
       if (duration != null) {
@@ -569,6 +571,34 @@ class _EducationScreenState extends State<EducationScreen> {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
   }
 
+  void _pushContentDetail(CourseDetailScreen page) {
+    if (!mounted) return;
+    debugPrint(
+      '[education_screen.dart][EDU_NAV] Opening CourseDetailScreen instantly',
+    );
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => page,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
+  }
+
+  void _pushSeriesDetail(SeriesDetailScreen page) {
+    if (!mounted) return;
+    debugPrint(
+      '[education_screen.dart][EDU_NAV] Opening SeriesDetailScreen instantly',
+    );
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => page,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final userName = _getUserName();
@@ -581,7 +611,10 @@ class _EducationScreenState extends State<EducationScreen> {
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppTheme.primaryDark, AppTheme.primary],
+                colors: [
+                  AppTheme.educationHeaderDark,
+                  AppTheme.educationHeaderLight,
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -633,7 +666,7 @@ class _EducationScreenState extends State<EducationScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                                 child: const Icon(
@@ -652,7 +685,7 @@ class _EducationScreenState extends State<EducationScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                                 child: Stack(
@@ -709,7 +742,9 @@ class _EducationScreenState extends State<EducationScreen> {
                     // Search bar
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 4),
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
@@ -724,7 +759,8 @@ class _EducationScreenState extends State<EducationScreen> {
                               onSubmitted: _handleSearch,
                               onChanged: (value) {
                                 setState(
-                                    () {}); // Rebuild to show/hide clear button
+                                  () {},
+                                ); // Rebuild to show/hide clear button
                               },
                               decoration: InputDecoration(
                                 hintText: 'Search for Topics, Courses',
@@ -734,15 +770,19 @@ class _EducationScreenState extends State<EducationScreen> {
                                   fontWeight: FontWeight.w400,
                                 ),
                                 border: InputBorder.none,
-                                contentPadding:
-                                    const EdgeInsets.symmetric(vertical: 12),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                               ),
                             ),
                           ),
                           if (_searchController.text.isNotEmpty)
                             IconButton(
-                              icon: Icon(Icons.clear,
-                                  color: Colors.grey[400], size: 20),
+                              icon: Icon(
+                                Icons.clear,
+                                color: Colors.grey[400],
+                                size: 20,
+                              ),
                               onPressed: () {
                                 _searchController.clear();
                                 setState(() {
@@ -754,8 +794,11 @@ class _EducationScreenState extends State<EducationScreen> {
                             )
                           else
                             IconButton(
-                              icon: Icon(Icons.search,
-                                  color: Colors.grey[400], size: 24),
+                              icon: Icon(
+                                Icons.search,
+                                color: Colors.grey[400],
+                                size: 24,
+                              ),
                               onPressed: () =>
                                   _handleSearch(_searchController.text),
                             ),
@@ -886,11 +929,13 @@ class _EducationScreenState extends State<EducationScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          _pushPage(const CategoryResultsScreen(
-                            categoryName: 'This Week',
-                            categoryColor: AppTheme.primary,
-                            isThisWeek: true,
-                          ));
+                          _pushPage(
+                            const CategoryResultsScreen(
+                              categoryName: 'This Week',
+                              categoryColor: AppTheme.primary,
+                              isThisWeek: true,
+                            ),
+                          );
                         },
                         child: const Text(
                           'See all',
@@ -910,37 +955,36 @@ class _EducationScreenState extends State<EducationScreen> {
                     child: _loadingCourses
                         ? const Center(child: CircularProgressIndicator())
                         : _thisWeekCourses.isEmpty
-                            ? const SizedBox.shrink()
-                            : ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: _thisWeekCourses.length,
-                                itemBuilder: (context, index) {
-                                  final course = _thisWeekCourses[index];
-                                  final courseId = _getCourseId(course);
-                                  final title = _getCourseTitle(course);
-                                  final instructor =
-                                      _getCourseInstructor(course);
-                                  final duration = _getCourseDuration(course);
-                                  final price = _getCoursePrice(course);
-                                  final rating = _getCourseRating(course);
-                                  final color = _getCourseColor(index);
-                                  final imageUrl = _getCourseImage(course);
-                                  final contentType = _getCourseType(course);
+                        ? const SizedBox.shrink()
+                        : ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _thisWeekCourses.length,
+                            itemBuilder: (context, index) {
+                              final course = _thisWeekCourses[index];
+                              final courseId = _getCourseId(course);
+                              final title = _getCourseTitle(course);
+                              final instructor = _getCourseInstructor(course);
+                              final duration = _getCourseDuration(course);
+                              final price = _getCoursePrice(course);
+                              final rating = _getCourseRating(course);
+                              final color = _getCourseColor(index);
+                              final imageUrl = _getCourseImage(course);
+                              final contentType = _getCourseType(course);
 
-                                  return _buildCourseCard(
-                                    courseData: course,
-                                    courseId: courseId,
-                                    title: title,
-                                    instructor: instructor,
-                                    price: price,
-                                    rating: rating,
-                                    duration: duration,
-                                    color: color,
-                                    imageUrl: imageUrl,
-                                    contentType: contentType,
-                                  );
-                                },
-                              ),
+                              return _buildCourseCard(
+                                courseData: course,
+                                courseId: courseId,
+                                title: title,
+                                instructor: instructor,
+                                price: price,
+                                rating: rating,
+                                duration: duration,
+                                color: color,
+                                imageUrl: imageUrl,
+                                contentType: contentType,
+                              );
+                            },
+                          ),
                   ),
                   const SizedBox(height: 32),
                   // Categories section
@@ -977,26 +1021,26 @@ class _EducationScreenState extends State<EducationScreen> {
                     child: _loadingCategories
                         ? const Center(child: CircularProgressIndicator())
                         : _categories.isEmpty
-                            ? const SizedBox.shrink()
-                            : ListView.builder(
-                                padding: const EdgeInsets.only(right: 24),
-                                scrollDirection: Axis.horizontal,
-                                itemCount: _categories.length,
-                                itemBuilder: (context, index) {
-                                  final category = _categories[index];
-                                  final categoryId = _getCategoryId(category);
-                                  final name = _getCategoryName(category);
-                                  final icon = _getCategoryIcon(name);
-                                  final color = _getCategoryColor(index);
+                        ? const SizedBox.shrink()
+                        : ListView.builder(
+                            padding: const EdgeInsets.only(right: 24),
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _categories.length,
+                            itemBuilder: (context, index) {
+                              final category = _categories[index];
+                              final categoryId = _getCategoryId(category);
+                              final name = _getCategoryName(category);
+                              final icon = _getCategoryIcon(name);
+                              final color = _getCategoryColor(index);
 
-                                  return _buildCategoryCard(
-                                    categoryId: categoryId,
-                                    title: name,
-                                    icon: icon,
-                                    color: color,
-                                  );
-                                },
-                              ),
+                              return _buildCategoryCard(
+                                categoryId: categoryId,
+                                title: name,
+                                icon: icon,
+                                color: color,
+                              );
+                            },
+                          ),
                   ),
                   const SizedBox(height: 32),
                   // Popular courses section
@@ -1013,10 +1057,12 @@ class _EducationScreenState extends State<EducationScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          _pushPage(const CategoryResultsScreen(
-                            categoryName: 'Popular',
-                            categoryColor: Color(0xFFFF8C42),
-                          ));
+                          _pushPage(
+                            const CategoryResultsScreen(
+                              categoryName: 'Popular',
+                              categoryColor: Color(0xFFFF8C42),
+                            ),
+                          );
                         },
                         child: const Text(
                           'See all',
@@ -1078,44 +1124,24 @@ class _EducationScreenState extends State<EducationScreen> {
     final itemsCount = series['items_count'] ?? 0;
     final thumbnailUrl = series['thumbnail_url'];
     final user = series['user'];
-    final creatorName =
-        user != null ? (user['name'] ?? user['username'] ?? '') : '';
+    final creatorName = user != null
+        ? (user['name'] ?? user['username'] ?? '')
+        : '';
 
     return GestureDetector(
-      onTap: () async {
+      onTap: () {
         if (seriesId.isEmpty) return;
+        debugPrint(
+          '[education_screen.dart][EDU_TAP] Series tapped: id=$seriesId title=$title',
+        );
 
-        final api = Provider.of<ApiService>(context, listen: false);
-
-        try {
-          final seriesData = await api.getSeriesById(seriesId);
-          if (!mounted) return;
-
-          final items = seriesData['items'] as List<dynamic>? ?? [];
-          if (items.isEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('No items in this series')),
-            );
-            return;
-          }
-
-          final firstItem = items.first;
-          final contentId = firstItem['id']?.toString() ?? '';
-          if (contentId.isEmpty) return;
-
-          _pushPage(CourseDetailScreen(
-            courseId: contentId,
-            courseTitle: firstItem['caption']?.toString() ?? title,
-            duration: firstItem['duration']?.toString() ?? '',
-            price: _getCoursePrice(firstItem),
-            color: AppTheme.primary,
-          ));
-        } catch (e) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to load series: $e')),
-          );
-        }
+        _pushSeriesDetail(
+          SeriesDetailScreen(
+            seriesId: seriesId,
+            initialTitle: title,
+            accentColor: AppTheme.primary,
+          ),
+        );
       },
       child: Container(
         width: 280,
@@ -1139,38 +1165,48 @@ class _EducationScreenState extends State<EducationScreen> {
               height: 100,
               width: double.infinity,
               decoration: BoxDecoration(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(16)),
-                color: AppTheme.primary.withOpacity(0.2),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
+                color: AppTheme.primary.withValues(alpha: 0.2),
               ),
               child: Stack(
                 children: [
                   if (thumbnailUrl != null)
                     ClipRRect(
-                      borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(16)),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
                       child: Image.network(
                         thumbnailUrl.toString(),
                         height: 100,
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const Center(
-                          child: Icon(Icons.play_circle_outline,
-                              size: 40, color: AppTheme.primaryDark),
+                          child: Icon(
+                            Icons.play_circle_outline,
+                            size: 40,
+                            color: AppTheme.primaryDark,
+                          ),
                         ),
                       ),
                     )
                   else
                     const Center(
-                      child: Icon(Icons.play_circle_outline,
-                          size: 40, color: AppTheme.primaryDark),
+                      child: Icon(
+                        Icons.play_circle_outline,
+                        size: 40,
+                        color: AppTheme.primaryDark,
+                      ),
                     ),
                   Positioned(
                     top: 8,
                     right: 8,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black54,
                         borderRadius: BorderRadius.circular(12),
@@ -1178,8 +1214,11 @@ class _EducationScreenState extends State<EducationScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.playlist_play,
-                              size: 14, color: Colors.white),
+                          const Icon(
+                            Icons.playlist_play,
+                            size: 14,
+                            color: Colors.white,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '$itemsCount',
@@ -1215,10 +1254,7 @@ class _EducationScreenState extends State<EducationScreen> {
                   if (creatorName.isNotEmpty)
                     Text(
                       'by $creatorName',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1269,18 +1305,26 @@ class _EducationScreenState extends State<EducationScreen> {
 
     return GestureDetector(
       onTap: () {
+        debugPrint(
+          '[education_screen.dart][EDU_TAP] Course tapped: id=$courseId title=$title',
+        );
         final content = _asContentMap(courseData);
         if (content != null && isLockedContent(content)) {
+          debugPrint(
+            '[education_screen.dart][EDU_TAP] Course locked, opening subscription dialog',
+          );
           _openLockedPaidContent(content);
           return;
         }
-        _pushPage(CourseDetailScreen(
-          courseId: courseId,
-          courseTitle: title,
-          duration: duration,
-          price: price,
-          color: color,
-        ));
+        _pushContentDetail(
+          CourseDetailScreen(
+            courseId: courseId,
+            courseTitle: title,
+            duration: duration,
+            price: price,
+            color: color,
+          ),
+        );
       },
       child: Container(
         width: 280,
@@ -1305,14 +1349,14 @@ class _EducationScreenState extends State<EducationScreen> {
                               imageUrl,
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => Container(
-                                color: color.withOpacity(0.15),
+                                color: color.withValues(alpha: 0.15),
                               ),
                             ),
                           )
                         : Container(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [color, color.withOpacity(0.7)],
+                                colors: [color, color.withValues(alpha: 0.7)],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
@@ -1324,7 +1368,7 @@ class _EducationScreenState extends State<EducationScreen> {
                     child: Icon(
                       contentIcon,
                       size: 50,
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                     ),
                   ),
                   Positioned(
@@ -1332,7 +1376,9 @@ class _EducationScreenState extends State<EducationScreen> {
                     right: 12,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black54,
                         borderRadius: BorderRadius.circular(8),
@@ -1340,11 +1386,7 @@ class _EducationScreenState extends State<EducationScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            contentIcon,
-                            color: Colors.white,
-                            size: 14,
-                          ),
+                          Icon(contentIcon, color: Colors.white, size: 14),
                           const SizedBox(width: 4),
                           Text(
                             contentType.toUpperCase(),
@@ -1363,7 +1405,9 @@ class _EducationScreenState extends State<EducationScreen> {
                     left: 12,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
@@ -1409,15 +1453,20 @@ class _EducationScreenState extends State<EducationScreen> {
             if (instructor.isNotEmpty)
               GestureDetector(
                 onTap: () {
-                  _pushPage(TeacherProfileScreen(
-                    teacherName: instructor,
-                    teacherTitle: 'Associate Editor',
-                  ));
+                  _pushPage(
+                    TeacherProfileScreen(
+                      teacherName: instructor,
+                      teacherTitle: 'Associate Editor',
+                    ),
+                  );
                 },
                 child: Row(
                   children: [
-                    Icon(Icons.person_outline,
-                        size: 16, color: Colors.grey[600]),
+                    Icon(
+                      Icons.person_outline,
+                      size: 16,
+                      color: Colors.grey[600],
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       instructor,
@@ -1452,16 +1501,21 @@ class _EducationScreenState extends State<EducationScreen> {
     required IconData icon,
     required Color color,
   }) {
-    final imageUrl = _getCategoryImage(_categories.firstWhere(
+    final imageUrl = _getCategoryImage(
+      _categories.firstWhere(
         (c) => _getCategoryId(c) == categoryId,
-        orElse: () => null));
+        orElse: () => null,
+      ),
+    );
     return GestureDetector(
       onTap: () {
-        _pushPage(CategoryResultsScreen(
-          categoryId: categoryId,
-          categoryName: title,
-          categoryColor: color,
-        ));
+        _pushPage(
+          CategoryResultsScreen(
+            categoryId: categoryId,
+            categoryName: title,
+            categoryColor: color,
+          ),
+        );
       },
       child: Container(
         width: 140,
@@ -1470,7 +1524,7 @@ class _EducationScreenState extends State<EducationScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.3), width: 2),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1479,7 +1533,7 @@ class _EducationScreenState extends State<EducationScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: imageUrl != null
@@ -1493,11 +1547,7 @@ class _EducationScreenState extends State<EducationScreen> {
                             Icon(icon, color: color, size: 32),
                       ),
                     )
-                  : Icon(
-                      icon,
-                      color: color,
-                      size: 32,
-                    ),
+                  : Icon(icon, color: color, size: 32),
             ),
             const SizedBox(height: 6),
             Text(
@@ -1545,18 +1595,26 @@ class _EducationScreenState extends State<EducationScreen> {
 
     return GestureDetector(
       onTap: () {
+        debugPrint(
+          '[education_screen.dart][EDU_TAP] Popular course tapped: id=$courseId title=$title',
+        );
         final content = _asContentMap(courseData);
         if (content != null && isLockedContent(content)) {
+          debugPrint(
+            '[education_screen.dart][EDU_TAP] Popular course locked, opening subscription dialog',
+          );
           _openLockedPaidContent(content);
           return;
         }
-        _pushPage(CourseDetailScreen(
-          courseId: courseId,
-          courseTitle: title,
-          duration: duration,
-          price: price,
-          color: color,
-        ));
+        _pushContentDetail(
+          CourseDetailScreen(
+            courseId: courseId,
+            courseTitle: title,
+            duration: duration,
+            price: price,
+            color: color,
+          ),
+        );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
@@ -1564,10 +1622,10 @@ class _EducationScreenState extends State<EducationScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.withOpacity(0.15)),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -1580,7 +1638,7 @@ class _EducationScreenState extends State<EducationScreen> {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
+                color: color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Stack(
@@ -1598,11 +1656,7 @@ class _EducationScreenState extends State<EducationScreen> {
                           ),
                         )
                       : Center(
-                          child: Icon(
-                            contentIcon,
-                            color: color,
-                            size: 30,
-                          ),
+                          child: Icon(contentIcon, color: color, size: 30),
                         ),
                   Positioned(
                     right: -2,
@@ -1614,16 +1668,12 @@ class _EducationScreenState extends State<EducationScreen> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 2,
                           ),
                         ],
                       ),
-                      child: Icon(
-                        contentIcon,
-                        size: 14,
-                        color: color,
-                      ),
+                      child: Icon(contentIcon, size: 14, color: color),
                     ),
                   ),
                 ],

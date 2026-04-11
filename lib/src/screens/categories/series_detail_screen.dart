@@ -32,6 +32,9 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen>
 
   void _pushPage(Widget page) {
     if (!mounted) return;
+    debugPrint(
+      '[series_detail_screen.dart][SERIES_DETAIL] Opening nested CourseDetailScreen',
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
@@ -41,6 +44,9 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen>
   @override
   void initState() {
     super.initState();
+    debugPrint(
+      '[series_detail_screen.dart][SERIES_DETAIL] Opened: seriesId=${widget.seriesId}',
+    );
     // Load series data after the widget is built to allow immediate navigation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -56,6 +62,9 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen>
   }
 
   Future<void> _loadSeries() async {
+    debugPrint(
+      '[series_detail_screen.dart][SERIES_DETAIL] Loading series data: seriesId=${widget.seriesId}',
+    );
     setState(() {
       _loading = true;
       _error = null;
@@ -76,7 +85,13 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen>
         _tabTypes = tabTypes;
         _loading = false;
       });
+      debugPrint(
+        '[series_detail_screen.dart][SERIES_DETAIL] Series loaded with ${items.length} items',
+      );
     } catch (e) {
+      debugPrint(
+        '[series_detail_screen.dart][SERIES_DETAIL] Failed to load series: $e',
+      );
       if (!mounted) return;
       setState(() {
         _loading = false;
@@ -163,78 +178,83 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen>
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? Center(child: Text(_error!))
-                : _series == null
-                    ? const Center(child: Text('Series not found'))
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (creatorName.isNotEmpty) ...[
-                                  Text(
-                                    creatorName,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                ],
-                                if (title.isNotEmpty)
-                                  Text(
-                                    title,
-                                    style: const TextStyle(
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                if (description.isNotEmpty) ...[
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    description,
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      color: Colors.black87,
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                ],
-                              ],
+            ? Center(child: Text(_error!))
+            : _series == null
+            ? const Center(child: Text('Series not found'))
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (creatorName.isNotEmpty) ...[
+                          Text(
+                            creatorName,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black54,
                             ),
                           ),
-                          if (_tabTypes.isNotEmpty)
-                            TabBar(
-                              controller: _tabController,
-                              isScrollable: true,
-                              labelColor: widget.accentColor,
-                              unselectedLabelColor: Colors.black54,
-                              indicatorColor: widget.accentColor,
-                              tabs: _tabTypes
-                                  .map((t) => Tab(
-                                      text:
-                                          t[0].toUpperCase() + t.substring(1)))
-                                  .toList(),
+                          const SizedBox(height: 6),
+                        ],
+                        if (title.isNotEmpty)
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
                             ),
-                          Expanded(
-                            child: _tabTypes.isEmpty
-                                ? const Center(child: Text('No items'))
-                                : TabBarView(
-                                    controller: _tabController,
-                                    children: _tabTypes
-                                        .map((type) => _buildItemsList(
-                                            _itemsForType(type)))
-                                        .toList(),
-                                  ),
+                          ),
+                        if (description.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            description,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: Colors.black87,
+                              height: 1.4,
+                            ),
                           ),
                         ],
-                      ),
+                      ],
+                    ),
+                  ),
+                  if (_tabTypes.isNotEmpty)
+                    TabBar(
+                      controller: _tabController,
+                      isScrollable: true,
+                      labelColor: widget.accentColor,
+                      unselectedLabelColor: Colors.black54,
+                      indicatorColor: widget.accentColor,
+                      tabs: _tabTypes
+                          .map(
+                            (t) =>
+                                Tab(text: t[0].toUpperCase() + t.substring(1)),
+                          )
+                          .toList(),
+                    ),
+                  Expanded(
+                    child: _tabTypes.isEmpty
+                        ? const Center(child: Text('No items'))
+                        : TabBarView(
+                            controller: _tabController,
+                            children: _tabTypes
+                                .map(
+                                  (type) =>
+                                      _buildItemsList(_itemsForType(type)),
+                                )
+                                .toList(),
+                          ),
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -253,19 +273,27 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen>
         final title = _itemTitle(item);
         final subtitle = _itemSubtitle(item);
         final thumb = _itemThumbnail(item);
-        final contentId =
-            (item is Map && item['id'] != null) ? item['id'].toString() : '';
+        final contentId = (item is Map && item['id'] != null)
+            ? item['id'].toString()
+            : '';
 
         return GestureDetector(
           onTap: () {
             if (contentId.isEmpty) return;
-            _pushPage(CourseDetailScreen(
-              courseId: contentId,
-              courseTitle: title,
-              duration: item is Map ? (item['duration']?.toString() ?? '') : '',
-              price: '',
-              color: widget.accentColor,
-            ));
+            debugPrint(
+              '[series_detail_screen.dart][SERIES_DETAIL] Item tapped: contentId=$contentId title=$title',
+            );
+            _pushPage(
+              CourseDetailScreen(
+                courseId: contentId,
+                courseTitle: title,
+                duration: item is Map
+                    ? (item['duration']?.toString() ?? '')
+                    : '',
+                price: '',
+                color: widget.accentColor,
+              ),
+            );
           },
           child: Container(
             decoration: BoxDecoration(
@@ -273,7 +301,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen>
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -287,11 +315,13 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen>
                   decoration: BoxDecoration(
                     color: Colors.grey[200],
                     borderRadius: const BorderRadius.horizontal(
-                        left: Radius.circular(16)),
+                      left: Radius.circular(16),
+                    ),
                   ),
                   child: ClipRRect(
                     borderRadius: const BorderRadius.horizontal(
-                        left: Radius.circular(16)),
+                      left: Radius.circular(16),
+                    ),
                     child: thumb != null
                         ? Image.network(
                             thumb,
@@ -304,7 +334,9 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen>
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 12),
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -356,7 +388,7 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: widget.accentColor.withOpacity(0.08),
+        color: widget.accentColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
@@ -384,7 +416,11 @@ class _SeriesDetailScreenState extends State<SeriesDetailScreen>
         icon = Icons.play_circle_fill;
     }
     return Center(
-      child: Icon(icon, size: 32, color: widget.accentColor.withOpacity(0.8)),
+      child: Icon(
+        icon,
+        size: 32,
+        color: widget.accentColor.withValues(alpha: 0.8),
+      ),
     );
   }
 }

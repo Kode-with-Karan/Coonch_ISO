@@ -24,4 +24,17 @@ class AppTheme {
 
   // App scaffold background (approximation of Colors.grey[50])
   static const Color scaffoldBackground = Color(0xFFFAFBFC);
+
+  // Topic-based blue progression used for page shifts.
+  // Education: light, Infotainment: medium-light, Entertainment: slightly darker.
+  static const Color topicEducationBackground = Color(0xFFF1F8FF);
+  static const Color topicInfotainmentBackground = Color(0xFFE8F2FF);
+  static const Color topicEntertainmentBackground = Color(0xFFDDEBFF);
+
+  static const Color topicEducationAccent = Color(0xFF7AB3F1);
+  static const Color topicInfotainmentAccent = Color(0xFF5E9EE6);
+  static const Color topicEntertainmentAccent = Color(0xFF3E85D9);
+
+  static const Color educationHeaderLight = Color(0xFF8FC2FF);
+  static const Color educationHeaderDark = Color(0xFF5E9EE6);
 }

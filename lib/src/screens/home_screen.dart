@@ -18,13 +18,16 @@ import 'stories/create_story_screen.dart';
 import '../widgets/coonch_logo.dart';
 import '../widgets/ios_sidebar.dart';
 import 'login/login_screen.dart';
+import '../theme.dart';
 
 const _logoDefaultFill = Color.fromRGBO(169, 203, 245, 0.85);
 const _logoDefaultRing = Color.fromRGBO(154, 188, 247, 0.88);
-const _logoEducationFill = Color(0xFFB2DFDB);
-const _logoEducationRing = Color(0xFF26A69A);
-const _logoEntertainmentFill = Color(0xFFBBDEFB); // Light blue
-const _logoEntertainmentRing = Color(0xFF1976D2); // Darker blue
+const _logoEducationFill = Color(0xFFDFF0FF);
+const _logoEducationRing = Color(0xFF7AB3F1);
+const _logoInfotainmentFill = Color(0xFFD5E9FF);
+const _logoInfotainmentRing = Color(0xFF5E9EE6);
+const _logoEntertainmentFill = Color(0xFFCBE2FF);
+const _logoEntertainmentRing = Color(0xFF3E85D9);
 
 /// Home screen with feeds and stories strip.
 class HomeScreen extends StatefulWidget {
@@ -166,19 +169,40 @@ class _HomeScreenState extends State<HomeScreen>
 
   bool get _entertainmentActive {
     final topic = _selectedTopic?.toLowerCase();
-    return topic == 'entertainment' || topic == 'infotainment';
+    return topic == 'entertainment';
+  }
+
+  bool get _infotainmentActive {
+    final topic = _selectedTopic?.toLowerCase();
+    return topic == 'infotainment';
   }
 
   Color get _logoFillColor {
     if (_educationActive) return _logoEducationFill;
+    if (_infotainmentActive) return _logoInfotainmentFill;
     if (_entertainmentActive) return _logoEntertainmentFill;
     return _logoDefaultFill;
   }
 
   Color get _logoRingColor {
     if (_educationActive) return _logoEducationRing;
+    if (_infotainmentActive) return _logoInfotainmentRing;
     if (_entertainmentActive) return _logoEntertainmentRing;
     return _logoDefaultRing;
+  }
+
+  Color get _topicAccentColor {
+    if (_educationActive) return AppTheme.topicEducationAccent;
+    if (_infotainmentActive) return AppTheme.topicInfotainmentAccent;
+    if (_entertainmentActive) return AppTheme.topicEntertainmentAccent;
+    return AppTheme.primaryDark;
+  }
+
+  Color get _topicSurfaceColor {
+    if (_educationActive) return AppTheme.topicEducationBackground;
+    if (_infotainmentActive) return AppTheme.topicInfotainmentBackground;
+    if (_entertainmentActive) return AppTheme.topicEntertainmentBackground;
+    return AppTheme.scaffoldBackground;
   }
 
   Future<void> _loadStories() async {
@@ -349,11 +373,14 @@ class _HomeScreenState extends State<HomeScreen>
                 return ListTile(
                   leading: CircleAvatar(
                     backgroundColor: Colors.grey[100],
-                    child: Icon(t['icon'] as IconData, color: Colors.lightBlue),
+                    child: Icon(
+                      t['icon'] as IconData,
+                      color: _topicAccentColor,
+                    ),
                   ),
                   title: Text(t['label'] as String),
                   trailing: _selectedTopic == key
-                      ? const Icon(Icons.check, color: Colors.lightBlue)
+                      ? Icon(Icons.check, color: _topicAccentColor)
                       : null,
                   onTap: () => Navigator.of(c).pop(key),
                   shape: RoundedRectangleBorder(
@@ -394,10 +421,10 @@ class _HomeScreenState extends State<HomeScreen>
     return Stack(
       children: [
         Scaffold(
-          backgroundColor: Colors.grey[50],
+          backgroundColor: _topicSurfaceColor,
           appBar: AppBar(
             elevation: 0.6,
-            backgroundColor: Colors.white,
+            backgroundColor: _topicSurfaceColor,
             foregroundColor: Colors.black87,
             automaticallyImplyLeading: false,
             leading: Padding(
@@ -447,7 +474,7 @@ class _HomeScreenState extends State<HomeScreen>
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: Colors.lightBlue,
+                            color: _topicAccentColor,
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 1.5),
                           ),
@@ -841,7 +868,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                       Container(
-                        color: Colors.white,
+                        color: _topicSurfaceColor,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 8,
@@ -856,8 +883,10 @@ class _HomeScreenState extends State<HomeScreen>
                               return Padding(
                                 padding: const EdgeInsets.only(right: 8),
                                 child: ChoiceChip(
-                                  selectedColor: Colors.lightBlue[100],
-                                  backgroundColor: Colors.grey[100],
+                                  selectedColor: _topicAccentColor.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                  backgroundColor: Colors.white,
                                   labelPadding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                   ),
@@ -865,7 +894,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     _filters[i],
                                     style: TextStyle(
                                       color: selected
-                                          ? Colors.lightBlue
+                                          ? _topicAccentColor
                                           : Colors.black54,
                                       fontWeight: selected
                                           ? FontWeight.bold

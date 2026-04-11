@@ -258,7 +258,7 @@ class _CategoryResultsScreenState extends State<CategoryResultsScreen> {
                           });
                           setState(() {});
                         },
-                        selectedColor: widget.categoryColor.withOpacity(0.2),
+                        selectedColor: widget.categoryColor.withValues(alpha: 0.2),
                         labelStyle: TextStyle(
                           color: isSelected
                               ? widget.categoryColor
@@ -309,7 +309,7 @@ class _CategoryResultsScreenState extends State<CategoryResultsScreen> {
                           });
                           setState(() {});
                         },
-                        selectedColor: widget.categoryColor.withOpacity(0.2),
+                        selectedColor: widget.categoryColor.withValues(alpha: 0.2),
                         labelStyle: TextStyle(
                           color: isSelected
                               ? widget.categoryColor
@@ -415,8 +415,8 @@ class _CategoryResultsScreenState extends State<CategoryResultsScreen> {
   Color _getCourseColor(int index) {
     final colors = [
       widget.categoryColor,
-      widget.categoryColor.withOpacity(0.8),
-      widget.categoryColor.withOpacity(0.6),
+      widget.categoryColor.withValues(alpha: 0.8),
+      widget.categoryColor.withValues(alpha: 0.6),
       const Color(0xFFFFD89C),
       const Color(0xFF7B8FFF),
       const Color(0xFFFF9B9B),
@@ -569,12 +569,12 @@ class _CategoryResultsScreenState extends State<CategoryResultsScreen> {
                     margin: const EdgeInsets.all(24),
                     height: 220,
                     decoration: BoxDecoration(
-                      color: widget.categoryColor.withOpacity(0.15),
+                      color: widget.categoryColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(24),
                       gradient: LinearGradient(
                         colors: [
-                          widget.categoryColor.withOpacity(0.2),
-                          widget.categoryColor.withOpacity(0.1),
+                          widget.categoryColor.withValues(alpha: 0.2),
+                          widget.categoryColor.withValues(alpha: 0.1),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -734,10 +734,10 @@ class _CategoryResultsScreenState extends State<CategoryResultsScreen> {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.05),
+          color: color.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha: 0.15),
           ),
         ),
         child: Row(
@@ -747,7 +747,7 @@ class _CategoryResultsScreenState extends State<CategoryResultsScreen> {
               width: 70,
               height: 70,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(

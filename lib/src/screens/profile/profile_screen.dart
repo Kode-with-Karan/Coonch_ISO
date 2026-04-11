@@ -1246,12 +1246,12 @@ class _SeriesCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
-          border: Border.all(color: AppTheme.primary.withOpacity(0.15)),
+          border: Border.all(color: AppTheme.primary.withValues(alpha: 0.15)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1406,7 +1406,7 @@ class _SeriesCard extends StatelessWidget {
   Widget _placeholder() {
     return Center(
       child: Icon(Icons.collections_bookmark,
-          color: AppTheme.primaryDark.withOpacity(0.7), size: 32),
+          color: AppTheme.primaryDark.withValues(alpha: 0.7), size: 32),
     );
   }
 }

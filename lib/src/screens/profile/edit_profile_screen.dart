@@ -44,11 +44,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
     final user = auth.user ?? {};
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final existingFirstRaw =
-        (user['first_name'] ?? user['firstName'])?.toString().trim();
-    final existingLastRaw =
-        (user['last_name'] ?? user['lastName'])?.toString().trim();
+    final existingFirstRaw = (user['first_name'] ?? user['firstName'])
+        ?.toString()
+        .trim();
+    final existingLastRaw = (user['last_name'] ?? user['lastName'])
+        ?.toString()
+        .trim();
     final firstLocked = existingFirstRaw != null && existingFirstRaw.isNotEmpty;
     final lastLocked = existingLastRaw != null && existingLastRaw.isNotEmpty;
     // populate controllers on first build
@@ -77,23 +78,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
     }
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
-            onPressed: () => Navigator.of(context).maybePop(),
-            icon: const Icon(Icons.arrow_back_ios)),
-        title:
-            const Text('Edit Profile', style: TextStyle(color: Colors.black)),
+          onPressed: () => Navigator.of(context).maybePop(),
+          icon: const Icon(Icons.arrow_back_ios),
+        ),
+        title: const Text(
+          'Edit Profile',
+          style: TextStyle(color: Colors.black),
+        ),
         centerTitle: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: EdgeInsets.fromLTRB(
-              20, 0, 20, bottomInset > 0 ? bottomInset + 16 : 24),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -102,25 +105,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               // Profile avatar with safe network loading or selected local file
               if (_avatarFile != null)
                 CircleAvatar(
-                    radius: 48, backgroundImage: FileImage(_avatarFile!))
+                  radius: 48,
+                  backgroundImage: FileImage(_avatarFile!),
+                )
               else
                 NetworkAvatar(url: user['avatar'] as String?, radius: 48),
               const SizedBox(height: 8),
               TextButton(
-                  onPressed: () {
-                    // Pick an image from gallery to set as profile photo
-                    () async {
-                      final picker = ImagePicker();
-                      final XFile? file = await picker.pickImage(
-                          source: ImageSource.gallery, imageQuality: 85);
-                      if (file == null) return;
-                      setState(() {
-                        _avatarFile = File(file.path);
-                      });
-                    }();
-                  },
-                  child: const Text('Change profile photo',
-                      style: TextStyle(color: Colors.lightBlue))),
+                onPressed: () {
+                  // Pick an image from gallery to set as profile photo
+                  () async {
+                    final picker = ImagePicker();
+                    final XFile? file = await picker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 85,
+                    );
+                    if (file == null) return;
+                    setState(() {
+                      _avatarFile = File(file.path);
+                    });
+                  }();
+                },
+                child: const Text(
+                  'Change profile photo',
+                  style: TextStyle(color: Colors.lightBlue),
+                ),
+              ),
               const SizedBox(height: 14),
               // First name and last name fields
               Row(
@@ -131,11 +141,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       readOnly: firstLocked,
                       enableInteractiveSelection: true,
                       decoration: InputDecoration(
-                          hintText: 'First name',
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12))),
+                        hintText: 'First name',
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -145,11 +157,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       readOnly: lastLocked,
                       enableInteractiveSelection: true,
                       decoration: InputDecoration(
-                          hintText: 'Last name',
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12))),
+                        hintText: 'Last name',
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -166,11 +180,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               TextField(
                 controller: _first,
                 decoration: InputDecoration(
-                    hintText: 'Username',
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12))),
+                  hintText: 'Username',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
               // last name removed in favor of bio
@@ -182,49 +198,65 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   maxLines: null,
                   expands: true,
                   decoration: InputDecoration(
-                      hintText: 'Bio',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12))),
+                    hintText: 'Bio',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
-                  controller: _phone,
-                  keyboardType: TextInputType.phone,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9+]')),
-                    LengthLimitingTextInputFormatter(16),
-                  ],
-                  decoration: InputDecoration(
-                      hintText:
-                          'Mobile Number with country code (e.g. +919876543210)',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12)))),
+                controller: _phone,
+                keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9+]')),
+                  LengthLimitingTextInputFormatter(16),
+                ],
+                decoration: InputDecoration(
+                  hintText:
+                      'Mobile Number with country code (e.g. +919876543210)',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
               const SizedBox(height: 18),
               TextButton(
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const ChangePasswordScreen())),
-                  child: const Text('Change Password',
-                      style: TextStyle(color: Colors.lightBlue))),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ChangePasswordScreen(),
+                  ),
+                ),
+                child: const Text(
+                  'Change Password',
+                  style: TextStyle(color: Colors.lightBlue),
+                ),
+              ),
               const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.lightBlue,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12))),
+                    backgroundColor: Colors.lightBlue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                   onPressed: () async {
                     final notifications = Provider.of<NotificationService>(
-                        context,
-                        listen: false);
-                    final auth =
-                        Provider.of<AuthProvider>(context, listen: false);
+                      context,
+                      listen: false,
+                    );
+                    final auth = Provider.of<AuthProvider>(
+                      context,
+                      listen: false,
+                    );
                     final phone = _phone.text.trim();
                     final data = {
                       'username': _first.text.trim(),
@@ -236,35 +268,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                     if (phone.isEmpty) {
                       notifications.showWarning(
-                          'Please enter mobile number with country code');
+                        'Please enter mobile number with country code',
+                      );
                       return;
                     }
                     showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (_) =>
-                            const Center(child: CircularProgressIndicator()));
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (_) =>
+                          const Center(child: CircularProgressIndicator()),
+                    );
                     try {
-                      final res =
-                          await auth.updateProfile(data, avatar: _avatarFile);
+                      final res = await auth.updateProfile(
+                        data,
+                        avatar: _avatarFile,
+                      );
                       Navigator.of(context).pop();
                       if (res['success'] == 1) {
                         if (widget.requireComplete) {
                           Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                  builder: (_) => const HomeScreen()));
+                            MaterialPageRoute(
+                              builder: (_) => const HomeScreen(),
+                            ),
+                          );
                         } else {
                           // Return a flag so caller can refresh their state
                           Navigator.of(context).pop({'updated': true});
                         }
                         return;
                       }
-                      notifications.showError(NotificationService.formatMessage(
-                          res['message'] ?? 'Update failed'));
+                      notifications.showError(
+                        NotificationService.formatMessage(
+                          res['message'] ?? 'Update failed',
+                        ),
+                      );
                     } catch (e) {
                       Navigator.of(context).pop();
-                      notifications
-                          .showError(NotificationService.formatMessage(e));
+                      notifications.showError(
+                        NotificationService.formatMessage(e),
+                      );
                     }
                   },
                   child: const Text('Done', style: TextStyle(fontSize: 18)),

@@ -50,8 +50,9 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(4)),
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   ListTile(
@@ -59,11 +60,14 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
                     title: const Text('Upload files from device'),
                     onTap: () {
                       Navigator.of(context).pop();
-                      Navigator.of(context).push(MaterialPageRoute(
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
                           builder: (_) => UploadContentScreen(
-                                type: _selectedType,
-                                profileName: 'Me',
-                              )));
+                            type: _selectedType,
+                            profileName: 'Me',
+                          ),
+                        ),
+                      );
                     },
                   ),
                   ListTile(
@@ -73,7 +77,8 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
                       Navigator.of(context).pop();
                       final res = await Navigator.of(context).push(
                         MaterialPageRoute(
-                            builder: (_) => const SelectExistingPostsScreen()),
+                          builder: (_) => const SelectExistingPostsScreen(),
+                        ),
                       );
                       if (res != null && mounted) {
                         setState(() {
@@ -95,15 +100,11 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Playlist'),
-        centerTitle: true,
-      ),
-      resizeToAvoidBottomInset: false,
+      appBar: AppBar(title: const Text('Create Playlist'), centerTitle: true),
+      resizeToAvoidBottomInset: true,
       body: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: EdgeInsets.fromLTRB(
-            16, 16, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -131,8 +132,9 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: _tagsCtrl,
-              decoration:
-                  const InputDecoration(labelText: 'Tags (comma separated)'),
+              decoration: const InputDecoration(
+                labelText: 'Tags (comma separated)',
+              ),
             ),
             const SizedBox(height: 18),
             const Text('Media', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -152,11 +154,16 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.add_photo_alternate_outlined,
-                                size: 36, color: Colors.black54),
+                            Icon(
+                              Icons.add_photo_alternate_outlined,
+                              size: 36,
+                              color: Colors.black54,
+                            ),
                             SizedBox(height: 8),
-                            Text('Select Posts',
-                                style: TextStyle(color: Colors.black54)),
+                            Text(
+                              'Select Posts',
+                              style: TextStyle(color: Colors.black54),
+                            ),
                           ],
                         ),
                       )
@@ -178,8 +185,10 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
                                   width: 180,
                                   height: 120,
                                   color: Colors.grey[200],
-                                  child: const Icon(Icons.broken_image,
-                                      color: Colors.grey),
+                                  child: const Icon(
+                                    Icons.broken_image,
+                                    color: Colors.grey,
+                                  ),
                                 ),
                               ),
                             );
@@ -200,7 +209,7 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
                   child: Text('Create Playlist'),
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -215,8 +224,10 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
       builder: (ctx) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -248,7 +259,8 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
                     } else {
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(
-                            builder: (_) => const PlaylistsScreen()),
+                          builder: (_) => const PlaylistsScreen(),
+                        ),
                       );
                     }
                   },
@@ -256,7 +268,8 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
                     backgroundColor: Colors.lightBlue,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: const Text('Done', style: TextStyle(fontSize: 16)),
                 ),
@@ -270,13 +283,15 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
 
   Future<void> _handleCreate() async {
     if (_titleCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Please enter a title')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter a title')));
       return;
     }
     if (_selectedPosts.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Select at least one post')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Select at least one post')));
       return;
     }
     setState(() => _saving = true);
@@ -287,9 +302,10 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
           .where((s) => s.isNotEmpty)
           .toList();
       final cover = _selectedPosts.firstWhere(
-          (p) =>
-              (p['thumbnail_url'] ?? p['file_url'] ?? '').toString().isNotEmpty,
-          orElse: () => _selectedPosts.first);
+        (p) =>
+            (p['thumbnail_url'] ?? p['file_url'] ?? '').toString().isNotEmpty,
+        orElse: () => _selectedPosts.first,
+      );
       final payload = {
         'id': null,
         'title': _titleCtrl.text.trim(),
@@ -297,11 +313,12 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
         'description': _descCtrl.text.trim(),
         'tags': tags,
         'posts': _selectedPosts,
-        'cover': (cover['thumbnail_url'] ??
-                cover['file_url'] ??
-                cover['image'] ??
-                '')
-            .toString(),
+        'cover':
+            (cover['thumbnail_url'] ??
+                    cover['file_url'] ??
+                    cover['image'] ??
+                    '')
+                .toString(),
         'createdAt': DateTime.now().toIso8601String(),
       };
       await PlaylistService.addPlaylist(payload);
@@ -310,7 +327,8 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to create playlist')));
+          const SnackBar(content: Text('Failed to create playlist')),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);

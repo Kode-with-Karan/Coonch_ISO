@@ -124,7 +124,7 @@ class _SignUpStep3State extends State<SignUpStep3> {
                                       height: 72,
                                       decoration: BoxDecoration(
                                         color: selected
-                                            ? accent.withOpacity(0.12)
+                                            ? accent.withValues(alpha: 0.12)
                                             : Colors.white,
                                         shape: BoxShape.circle,
                                       ),

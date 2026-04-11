@@ -25,14 +25,15 @@ class UploadContentScreen extends StatefulWidget {
   final String? initialSeriesDescription;
   final VoidCallback? onUploadSuccess;
 
-  const UploadContentScreen(
-      {super.key,
-      required this.type,
-      required this.profileName,
-      this.seriesId,
-      this.initialSeriesTitle,
-      this.initialSeriesDescription,
-      this.onUploadSuccess});
+  const UploadContentScreen({
+    super.key,
+    required this.type,
+    required this.profileName,
+    this.seriesId,
+    this.initialSeriesTitle,
+    this.initialSeriesDescription,
+    this.onUploadSuccess,
+  });
 
   @override
   State<UploadContentScreen> createState() => _UploadContentScreenState();
@@ -511,15 +512,17 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
     _clearPickedFiles();
     try {
       final res = await FilePicker.platform.pickFiles(
-          type: FileType.custom,
-          allowedExtensions: ['mp3', 'm4a', 'wav', 'aac', 'ogg']);
+        type: FileType.custom,
+        allowedExtensions: ['mp3', 'm4a', 'wav', 'aac', 'ogg'],
+      );
       if (res != null && res.files.isNotEmpty) {
         final p = res.files.first;
         if (p.path != null) _applyPickedPath(p.path!, p.name);
       }
     } catch (e) {
       Provider.of<NotificationService>(context, listen: false).showError(
-          NotificationService.formatMessage('Failed to pick audio: $e'));
+        NotificationService.formatMessage('Failed to pick audio: $e'),
+      );
     }
   }
 
@@ -545,16 +548,20 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
       return;
     }
     if (_isSeriesAudioRecording) {
-      Provider.of<NotificationService>(context, listen: false)
-          .showWarning('Stop series audio recording first');
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showWarning('Stop series audio recording first');
       return;
     }
     _clearPickedFiles();
     try {
       final hasPermission = await _recorder.hasPermission();
       if (!hasPermission) {
-        Provider.of<NotificationService>(context, listen: false)
-            .showWarning('Microphone permission is required to record audio');
+        Provider.of<NotificationService>(
+          context,
+          listen: false,
+        ).showWarning('Microphone permission is required to record audio');
         return;
       }
       final dir = await getTemporaryDirectory();
@@ -562,23 +569,30 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
           '${dir.path}/recording_${DateTime.now().millisecondsSinceEpoch}.m4a';
       await _recorder.start(
         const RecordConfig(
-            encoder: AudioEncoder.aacLc, bitRate: 128000, sampleRate: 44100),
+          encoder: AudioEncoder.aacLc,
+          bitRate: 128000,
+          sampleRate: 44100,
+        ),
         path: path,
       );
       setState(() {
         _isRecording = true;
       });
-      Provider.of<NotificationService>(context, listen: false)
-          .showInfo('Recording started...');
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showInfo('Recording started...');
     } catch (e) {
       setState(() => _isRecording = false);
       Provider.of<NotificationService>(context, listen: false).showError(
-          NotificationService.formatMessage('Failed to start recording: $e'));
+        NotificationService.formatMessage('Failed to start recording: $e'),
+      );
     }
   }
 
-  Future<void> _stopSeriesAudioRecordingIfActive(
-      {bool applyFile = false}) async {
+  Future<void> _stopSeriesAudioRecordingIfActive({
+    bool applyFile = false,
+  }) async {
     if (!_isSeriesAudioRecording) return;
     String? path;
     try {
@@ -597,16 +611,19 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
         recordingIndex < _seriesItems.length) {
       setState(() {
         _seriesItems[recordingIndex].file = File(path!);
-        _seriesItems[recordingIndex].fileName =
-            path.split(Platform.pathSeparator).last;
+        _seriesItems[recordingIndex].fileName = path
+            .split(Platform.pathSeparator)
+            .last;
       });
     }
   }
 
   Future<void> _toggleSeriesAudioRecording(int index) async {
     if (_isRecording) {
-      Provider.of<NotificationService>(context, listen: false)
-          .showWarning('Stop single audio recording first');
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showWarning('Stop single audio recording first');
       return;
     }
 
@@ -616,16 +633,20 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
     }
 
     if (_isSeriesAudioRecording && _recordingSeriesItemIndex != index) {
-      Provider.of<NotificationService>(context, listen: false)
-          .showWarning('Another series item is currently recording');
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showWarning('Another series item is currently recording');
       return;
     }
 
     try {
       final hasPermission = await _recorder.hasPermission();
       if (!hasPermission) {
-        Provider.of<NotificationService>(context, listen: false)
-            .showWarning('Microphone permission is required to record audio');
+        Provider.of<NotificationService>(
+          context,
+          listen: false,
+        ).showWarning('Microphone permission is required to record audio');
         return;
       }
       final dir = await getTemporaryDirectory();
@@ -633,22 +654,28 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
           '${dir.path}/series_recording_${DateTime.now().millisecondsSinceEpoch}.m4a';
       await _recorder.start(
         const RecordConfig(
-            encoder: AudioEncoder.aacLc, bitRate: 128000, sampleRate: 44100),
+          encoder: AudioEncoder.aacLc,
+          bitRate: 128000,
+          sampleRate: 44100,
+        ),
         path: path,
       );
       setState(() {
         _isSeriesAudioRecording = true;
         _recordingSeriesItemIndex = index;
       });
-      Provider.of<NotificationService>(context, listen: false)
-          .showInfo('Recording started for item ${index + 1}');
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showInfo('Recording started for item ${index + 1}');
     } catch (e) {
       setState(() {
         _isSeriesAudioRecording = false;
         _recordingSeriesItemIndex = null;
       });
       Provider.of<NotificationService>(context, listen: false).showError(
-          NotificationService.formatMessage('Failed to start recording: $e'));
+        NotificationService.formatMessage('Failed to start recording: $e'),
+      );
     }
   }
 
@@ -662,7 +689,8 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
       }
     } catch (e) {
       Provider.of<NotificationService>(context, listen: false).showError(
-          NotificationService.formatMessage('Failed to record video: $e'));
+        NotificationService.formatMessage('Failed to record video: $e'),
+      );
     }
   }
 
@@ -687,7 +715,10 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
   Future<void> _pickTextFile() async {
     try {
       final result = await FilePicker.platform.pickFiles(
-          type: FileType.custom, allowedExtensions: ['txt'], withData: true);
+        type: FileType.custom,
+        allowedExtensions: ['txt'],
+        withData: true,
+      );
       if (result == null || result.files.isEmpty) return;
       final picked = result.files.first;
       String? contents;
@@ -697,8 +728,10 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
         contents = await File(picked.path!).readAsString();
       }
       if (contents == null || contents.trim().isEmpty) {
-        Provider.of<NotificationService>(context, listen: false)
-            .showWarning('Selected file is empty');
+        Provider.of<NotificationService>(
+          context,
+          listen: false,
+        ).showWarning('Selected file is empty');
         return;
       }
       final sanitized = contents.trim();
@@ -706,11 +739,14 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
         _captionController.text = sanitized;
         _pickedFileName = picked.name;
       });
-      Provider.of<NotificationService>(context, listen: false)
-          .showSuccess('Text loaded from file');
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showSuccess('Text loaded from file');
     } catch (e) {
       Provider.of<NotificationService>(context, listen: false).showError(
-          NotificationService.formatMessage('Failed to read text file: $e'));
+        NotificationService.formatMessage('Failed to read text file: $e'),
+      );
     }
   }
 
@@ -729,16 +765,21 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
       }
       if (_selectedType == 'story') {
         final choice = await showDialog<String?>(
-            context: context,
-            builder: (c) =>
-                SimpleDialog(title: const Text('Create story from'), children: [
-                  SimpleDialogOption(
-                      onPressed: () => Navigator.of(c).pop('image'),
-                      child: const Text('Image')),
-                  SimpleDialogOption(
-                      onPressed: () => Navigator.of(c).pop('video'),
-                      child: const Text('Video'))
-                ]));
+          context: context,
+          builder: (c) => SimpleDialog(
+            title: const Text('Create story from'),
+            children: [
+              SimpleDialogOption(
+                onPressed: () => Navigator.of(c).pop('image'),
+                child: const Text('Image'),
+              ),
+              SimpleDialogOption(
+                onPressed: () => Navigator.of(c).pop('video'),
+                child: const Text('Video'),
+              ),
+            ],
+          ),
+        );
         if (choice == 'image') {
           final picked = await picker.pickImage(source: ImageSource.gallery);
           if (picked != null) _applyPickedPath(picked.path, picked.name);
@@ -755,11 +796,15 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
         if (picked != null) _applyPickedPath(picked.path, picked.name);
         return;
       }
-      Provider.of<NotificationService>(context, listen: false)
-          .showWarning('Only image/video pick is supported in this build.');
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showWarning('Only image/video pick is supported in this build.');
     } catch (e) {
-      Provider.of<NotificationService>(context, listen: false).showError(
-          NotificationService.formatMessage('Failed to pick file: $e'));
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showError(NotificationService.formatMessage('Failed to pick file: $e'));
     }
   }
 
@@ -768,11 +813,12 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
     try {
       final tempDir = await getTemporaryDirectory();
       final thumbPath = await VideoThumbnail.thumbnailFile(
-          video: _pickedFile!.path,
-          thumbnailPath: tempDir.path,
-          imageFormat: ImageFormat.JPEG,
-          maxWidth: 512,
-          quality: 75);
+        video: _pickedFile!.path,
+        thumbnailPath: tempDir.path,
+        imageFormat: ImageFormat.JPEG,
+        maxWidth: 512,
+        quality: 75,
+      );
       if (thumbPath != null) {
         final f = File(thumbPath);
         final sanitized = await _sanitizeImageFile(f);
@@ -802,34 +848,46 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
     } catch (_) {}
   }
 
-  Widget _safeImagePreview(File file,
-      {BoxFit fit = BoxFit.cover, double? maxWidth, double? maxHeight}) {
+  Widget _safeImagePreview(
+    File file, {
+    BoxFit fit = BoxFit.cover,
+    double? maxWidth,
+    double? maxHeight,
+  }) {
     try {
       if (!file.existsSync()) {
         return Container(
-            color: Colors.grey[200], child: const Icon(Icons.broken_image));
+          color: Colors.grey[200],
+          child: const Icon(Icons.broken_image),
+        );
       }
       final length = file.lengthSync();
       if (length < 200) {
         return Container(
-            padding: const EdgeInsets.all(8),
-            color: Colors.grey[100],
-            child: const Text('Preview not available'));
-      }
-      return ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.file(file,
-              fit: fit,
-              width: maxWidth,
-              height: maxHeight,
-              errorBuilder: (_, __, ___) => Container(
-                  color: Colors.grey[200],
-                  child: const Icon(Icons.broken_image))));
-    } catch (_) {
-      return Container(
           padding: const EdgeInsets.all(8),
           color: Colors.grey[100],
-          child: const Text('Preview not available'));
+          child: const Text('Preview not available'),
+        );
+      }
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.file(
+          file,
+          fit: fit,
+          width: maxWidth,
+          height: maxHeight,
+          errorBuilder: (_, __, ___) => Container(
+            color: Colors.grey[200],
+            child: const Icon(Icons.broken_image),
+          ),
+        ),
+      );
+    } catch (_) {
+      return Container(
+        padding: const EdgeInsets.all(8),
+        color: Colors.grey[100],
+        child: const Text('Preview not available'),
+      );
     }
   }
 
@@ -839,83 +897,100 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
       builder: (c) {
         final controller = TextEditingController();
         List<dynamic> filtered = List.from(_categories);
-        return StatefulBuilder(builder: (ctx, setSt) {
-          void updateFilter(String q) {
-            final ql = q.toLowerCase();
-            filtered = _categories.where((cat) {
-              try {
-                final name = (cat is Map && cat['name'] != null)
-                    ? cat['name'].toString().toLowerCase()
-                    : cat.toString().toLowerCase();
-                return name.contains(ql);
-              } catch (_) {
-                return false;
-              }
-            }).toList();
-            setSt(() {});
-          }
+        return StatefulBuilder(
+          builder: (ctx, setSt) {
+            void updateFilter(String q) {
+              final ql = q.toLowerCase();
+              filtered = _categories.where((cat) {
+                try {
+                  final name = (cat is Map && cat['name'] != null)
+                      ? cat['name'].toString().toLowerCase()
+                      : cat.toString().toLowerCase();
+                  return name.contains(ql);
+                } catch (_) {
+                  return false;
+                }
+              }).toList();
+              setSt(() {});
+            }
 
-          return AlertDialog(
-            title: const Text('Select category'),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                TextField(
-                    controller: controller,
-                    decoration:
-                        const InputDecoration(hintText: 'Search categories'),
-                    onChanged: updateFilter),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: [
-                      if (filtered.isEmpty)
-                        const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8.0),
-                            child: Text('No categories found')),
-                      ...filtered.map((cat) {
-                        final id = (cat is Map && cat['id'] != null)
-                            ? cat['id'] as int
-                            : null;
-                        final name = (cat is Map && cat['name'] != null)
-                            ? cat['name'].toString()
-                            : cat.toString();
-                        final image = (cat is Map && cat['image_url'] != null)
-                            ? cat['image_url'] as String?
-                            : null;
-                        return ListTile(
-                          leading: image != null
-                              ? ClipOval(
-                                  child: Image.network(image,
-                                      width: 36,
-                                      height: 36,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Container(
+            return AlertDialog(
+              title: const Text('Select category'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: controller,
+                      decoration: const InputDecoration(
+                        hintText: 'Search categories',
+                      ),
+                      onChanged: updateFilter,
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: [
+                          if (filtered.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8.0),
+                              child: Text('No categories found'),
+                            ),
+                          ...filtered.map((cat) {
+                            final id = (cat is Map && cat['id'] != null)
+                                ? cat['id'] as int
+                                : null;
+                            final name = (cat is Map && cat['name'] != null)
+                                ? cat['name'].toString()
+                                : cat.toString();
+                            final image =
+                                (cat is Map && cat['image_url'] != null)
+                                ? cat['image_url'] as String?
+                                : null;
+                            return ListTile(
+                              leading: image != null
+                                  ? ClipOval(
+                                      child: Image.network(
+                                        image,
+                                        width: 36,
+                                        height: 36,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => Container(
                                           width: 36,
                                           height: 36,
                                           color: Colors.grey[300],
-                                          child: const Icon(Icons.broken_image,
-                                              size: 16))))
-                              : const CircleAvatar(
-                                  radius: 18, child: Icon(Icons.category)),
-                          title: Text(name),
-                          onTap: () {
-                            setState(() {
-                              _selectedCategoryId = id;
-                              _otherCategoryName = null;
-                            });
-                            Navigator.of(ctx).pop(true);
-                          },
-                        );
-                      }).toList(),
-                    ],
-                  ),
+                                          child: const Icon(
+                                            Icons.broken_image,
+                                            size: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : const CircleAvatar(
+                                      radius: 18,
+                                      child: Icon(Icons.category),
+                                    ),
+                              title: Text(name),
+                              onTap: () {
+                                setState(() {
+                                  _selectedCategoryId = id;
+                                  _otherCategoryName = null;
+                                });
+                                Navigator.of(ctx).pop(true);
+                              },
+                            );
+                          }).toList(),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ]),
-            ),
-          );
-        });
+              ),
+            );
+          },
+        );
       },
     );
     if (selected == true) setState(() {});
@@ -924,20 +999,26 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
   Future<void> _upload() async {
     if (_uploading) return;
     if (_selectedType != 'text' && _pickedFile == null) {
-      Provider.of<NotificationService>(context, listen: false)
-          .showWarning('Please choose a file');
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showWarning('Please choose a file');
       return;
     }
 
     if (_selectedType == 'text' && _captionController.text.trim().isEmpty) {
-      Provider.of<NotificationService>(context, listen: false)
-          .showWarning('Please enter text or upload a .txt file');
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showWarning('Please enter text or upload a .txt file');
       return;
     }
 
     if (_selectedTopic == null || _selectedTopic!.isEmpty) {
-      Provider.of<NotificationService>(context, listen: false)
-          .showWarning('Please select a topic');
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showWarning('Please select a topic');
       return;
     }
 
@@ -946,8 +1027,10 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
       _uploadProgress = 0;
     });
     final api = Provider.of<ApiService>(context, listen: false);
-    final notifications =
-        Provider.of<NotificationService>(context, listen: false);
+    final notifications = Provider.of<NotificationService>(
+      context,
+      listen: false,
+    );
 
     try {
       final fields = <String, String>{};
@@ -957,13 +1040,15 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
       if (_selectedTopic != null) fields['topic'] = _selectedTopic!;
       fields['publish_now'] = _publishSingleNow.toString();
 
-      fields.addAll(await _buildPricingFieldsForUpload(
-        contentType: _selectedType,
-        caption: caption,
-        file: _pickedFile,
-        durationText: _durationController.text,
-        allowCustomPrice: _selectedTopic == 'education' && _canSetCustomPrice,
-      ));
+      fields.addAll(
+        await _buildPricingFieldsForUpload(
+          contentType: _selectedType,
+          caption: caption,
+          file: _pickedFile,
+          durationText: _durationController.text,
+          allowCustomPrice: _selectedTopic == 'education' && _canSetCustomPrice,
+        ),
+      );
 
       if (_selectedCategoryId != null) {
         fields['category'] = _selectedCategoryId.toString();
@@ -978,27 +1063,32 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
         await _generateThumbnail();
       }
 
-      final res = await api.createContent(fields,
-          file: _pickedFile,
-          fileField: fileField,
-          thumbnail: _thumbnailFile, onProgress: (progress) {
-        if (mounted) {
-          setState(() => _uploadProgress = progress);
-        }
-      });
+      final res = await api.createContent(
+        fields,
+        file: _pickedFile,
+        fileField: fileField,
+        thumbnail: _thumbnailFile,
+        onProgress: (progress) {
+          if (mounted) {
+            setState(() => _uploadProgress = progress);
+          }
+        },
+      );
 
       final awarded =
           ((res['data'] ?? const {})['reward_points_awarded']) as int?;
-      final status = ((res['data'] ?? const {})['status'] ??
-              (_publishSingleNow ? 'published' : 'draft'))
-          .toString();
+      final status =
+          ((res['data'] ?? const {})['status'] ??
+                  (_publishSingleNow ? 'published' : 'draft'))
+              .toString();
       final isDraft = status == 'draft';
 
       if (isDraft) {
         notifications.showSuccess('Draft saved successfully!');
       } else if (awarded != null && awarded > 0) {
-        notifications
-            .showSuccess('+$awarded points earned for your upload! 🎉');
+        notifications.showSuccess(
+          '+$awarded points earned for your upload! 🎉',
+        );
       } else {
         notifications.showSuccess('Content uploaded successfully!');
       }
@@ -1006,8 +1096,9 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
       widget.onUploadSuccess?.call();
       Navigator.of(context).pop(res);
     } catch (e) {
-      notifications
-          .showError(NotificationService.formatMessage('Failed to upload: $e'));
+      notifications.showError(
+        NotificationService.formatMessage('Failed to upload: $e'),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -1020,8 +1111,9 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
 
   void _addSeriesItem() {
     setState(() {
-      _seriesItems
-          .add(SeriesItem(type: 'video', order: _seriesItems.length + 1));
+      _seriesItems.add(
+        SeriesItem(type: 'video', order: _seriesItems.length + 1),
+      );
     });
   }
 
@@ -1051,8 +1143,10 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
     });
   }
 
-  Future<void> _pickFileForSeriesItem(int index,
-      {bool useCameraForVideo = false}) async {
+  Future<void> _pickFileForSeriesItem(
+    int index, {
+    bool useCameraForVideo = false,
+  }) async {
     final item = _seriesItems[index];
     try {
       final picker = ImagePicker();
@@ -1081,8 +1175,9 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
         }
       } else if (item.type == 'audio') {
         final res = await FilePicker.platform.pickFiles(
-            type: FileType.custom,
-            allowedExtensions: ['mp3', 'm4a', 'wav', 'aac', 'ogg']);
+          type: FileType.custom,
+          allowedExtensions: ['mp3', 'm4a', 'wav', 'aac', 'ogg'],
+        );
         if (res != null && res.files.isNotEmpty) {
           final p = res.files.first;
           if (p.path != null) {
@@ -1094,8 +1189,10 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
         }
       }
     } catch (e) {
-      Provider.of<NotificationService>(context, listen: false).showError(
-          NotificationService.formatMessage('Failed to pick file: $e'));
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showError(NotificationService.formatMessage('Failed to pick file: $e'));
     }
   }
 
@@ -1145,34 +1242,44 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
     if (_uploading) return;
 
     if (_seriesTitleController.text.trim().isEmpty) {
-      Provider.of<NotificationService>(context, listen: false)
-          .showWarning('Please enter a series title');
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showWarning('Please enter a series title');
       return;
     }
 
     if (_seriesItems.isEmpty) {
-      Provider.of<NotificationService>(context, listen: false)
-          .showWarning('Please add at least one item to the series');
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showWarning('Please add at least one item to the series');
       return;
     }
 
     for (int i = 0; i < _seriesItems.length; i++) {
       final item = _seriesItems[i];
       if (item.type != 'text' && item.file == null) {
-        Provider.of<NotificationService>(context, listen: false)
-            .showWarning('Please select a file for item ${i + 1}');
+        Provider.of<NotificationService>(
+          context,
+          listen: false,
+        ).showWarning('Please select a file for item ${i + 1}');
         return;
       }
       if (item.type == 'text' && item.caption.trim().isEmpty) {
-        Provider.of<NotificationService>(context, listen: false)
-            .showWarning('Please enter text for item ${i + 1}');
+        Provider.of<NotificationService>(
+          context,
+          listen: false,
+        ).showWarning('Please enter text for item ${i + 1}');
         return;
       }
     }
 
     if (_selectedTopic == null || _selectedTopic!.isEmpty) {
-      Provider.of<NotificationService>(context, listen: false)
-          .showWarning('Please select a topic');
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showWarning('Please select a topic');
       return;
     }
 
@@ -1181,11 +1288,14 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
       _uploadProgress = 0;
     });
     final api = Provider.of<ApiService>(context, listen: false);
-    final notifications =
-        Provider.of<NotificationService>(context, listen: false);
+    final notifications = Provider.of<NotificationService>(
+      context,
+      listen: false,
+    );
 
     try {
-      String currentSeriesId = _prefilledSeriesId ??
+      String currentSeriesId =
+          _prefilledSeriesId ??
           'series_${DateTime.now().millisecondsSinceEpoch}';
       String? backendSeriesId;
       final seriesTitle = _seriesTitleController.text.trim();
@@ -1196,8 +1306,9 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
       for (int i = 0; i < _seriesItems.length; i++) {
         final item = _seriesItems[i];
         final fields = <String, String>{};
-        final itemCaption =
-            item.caption.isNotEmpty ? item.caption : seriesTitle;
+        final itemCaption = item.caption.isNotEmpty
+            ? item.caption
+            : seriesTitle;
         fields['type'] = item.type;
         fields['caption'] = itemCaption;
         fields['topic'] = _selectedTopic!;
@@ -1206,12 +1317,15 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
         fields['is_series'] = 'true';
         fields['publish_now'] = _publishSeriesNow.toString();
 
-        fields.addAll(await _buildPricingFieldsForUpload(
-          contentType: item.type,
-          caption: itemCaption,
-          file: item.file,
-          allowCustomPrice: _selectedTopic == 'education' && _canSetCustomPrice,
-        ));
+        fields.addAll(
+          await _buildPricingFieldsForUpload(
+            contentType: item.type,
+            caption: itemCaption,
+            file: item.file,
+            allowCustomPrice:
+                _selectedTopic == 'education' && _canSetCustomPrice,
+          ),
+        );
 
         if (seriesTitle.isNotEmpty) fields['series_title'] = seriesTitle;
         if (seriesDescription.isNotEmpty) {
@@ -1224,14 +1338,17 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
 
         Map<String, dynamic>? res;
         if (item.type != 'text' && item.file != null) {
-          res = await api.createContent(fields,
-              file: item.file,
-              fileField: 'file',
-              thumbnail: item.thumbnail, onProgress: (progress) {
-            if (mounted) {
-              setState(() => _uploadProgress = progress);
-            }
-          });
+          res = await api.createContent(
+            fields,
+            file: item.file,
+            fileField: 'file',
+            thumbnail: item.thumbnail,
+            onProgress: (progress) {
+              if (mounted) {
+                setState(() => _uploadProgress = progress);
+              }
+            },
+          );
         } else if (item.type == 'text') {
           res = await api.createContent(fields);
         }
@@ -1249,9 +1366,11 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
       if (_publishSeriesNow && totalAwarded > 0) {
         notifications.showInfo('+$totalAwarded pts for series');
       }
-      notifications.showSuccess(_publishSeriesNow
-          ? 'Series uploaded successfully'
-          : 'Series draft saved successfully');
+      notifications.showSuccess(
+        _publishSeriesNow
+            ? 'Series uploaded successfully'
+            : 'Series draft saved successfully',
+      );
       if (!mounted) return;
       Navigator.of(context).pop({
         'success': true,
@@ -1261,7 +1380,8 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
       });
     } catch (e) {
       notifications.showError(
-          NotificationService.formatMessage('Failed to upload series: $e'));
+        NotificationService.formatMessage('Failed to upload series: $e'),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -1275,35 +1395,38 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
-          title: Text(_isSeriesMode ? 'Create Series' : 'Add your content'),
-          centerTitle: true,
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          elevation: 0,
-          actions: [
-            IconButton(
-              onPressed: _uploading
-                  ? null
-                  : () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const DraftsScreen()),
-                      );
-                    },
-              tooltip: 'Drafts',
-              icon: const Icon(Icons.drafts_outlined),
-            )
-          ]),
+        title: Text(_isSeriesMode ? 'Create Series' : 'Add your content'),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: _uploading
+                ? null
+                : () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const DraftsScreen()),
+                    );
+                  },
+            tooltip: 'Drafts',
+            icon: const Icon(Icons.drafts_outlined),
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: EdgeInsets.fromLTRB(
-            16, 16, 16, MediaQuery.of(context).viewInsets.bottom + 16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _buildModeToggle(),
-          const SizedBox(height: 20),
-          if (_isSeriesMode) _buildSeriesUI() else _buildSingleContentUI(),
-        ]),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildModeToggle(),
+            const SizedBox(height: 20),
+            if (_isSeriesMode) _buildSeriesUI() else _buildSingleContentUI(),
+          ],
+        ),
       ),
     );
   }
@@ -1331,8 +1454,9 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
                     'Single Content',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color:
-                          !_isSeriesMode ? AppTheme.primary : Colors.grey[600],
+                      color: !_isSeriesMode
+                          ? AppTheme.primary
+                          : Colors.grey[600],
                     ),
                   ),
                 ),
@@ -1353,8 +1477,9 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
                     'Series',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color:
-                          _isSeriesMode ? AppTheme.primary : Colors.grey[600],
+                      color: _isSeriesMode
+                          ? AppTheme.primary
+                          : Colors.grey[600],
                     ),
                   ),
                 ),
@@ -1412,138 +1537,158 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
   }
 
   Widget _buildSeriesUI() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Series Title (required)',
-          style: TextStyle(fontWeight: FontWeight.w600)),
-      const SizedBox(height: 8),
-      TextField(
-        controller: _seriesTitleController,
-        decoration: const InputDecoration(
-          hintText: 'Enter series title',
-          border: OutlineInputBorder(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Series Title (required)',
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
-      ),
-      const SizedBox(height: 12),
-      const Text('Series Description (optional)',
-          style: TextStyle(fontWeight: FontWeight.w600)),
-      const SizedBox(height: 8),
-      TextField(
-        controller: _seriesDescriptionController,
-        decoration: const InputDecoration(
-          hintText: 'Add a short description for this series',
-          border: OutlineInputBorder(),
-        ),
-        maxLines: 3,
-      ),
-      const SizedBox(height: 16),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('Series Items (${_seriesItems.length})',
-              style:
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-        ],
-      ),
-      const SizedBox(height: 8),
-      if (_seriesItems.isEmpty)
-        Container(
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(12),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _seriesTitleController,
+          decoration: const InputDecoration(
+            hintText: 'Enter series title',
+            border: OutlineInputBorder(),
           ),
-          child: Center(
-            child: Column(
-              children: [
-                Icon(Icons.video_library, size: 48, color: Colors.grey[400]),
-                const SizedBox(height: 8),
-                Text('No items added yet',
-                    style: TextStyle(color: Colors.grey[600])),
-                const SizedBox(height: 4),
-                Text('Tap "Add Item" below to add content to your series',
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12)),
-              ],
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Series Description (optional)',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _seriesDescriptionController,
+          decoration: const InputDecoration(
+            hintText: 'Add a short description for this series',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Series Items (${_seriesItems.length})',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (_seriesItems.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Column(
+                children: [
+                  Icon(Icons.video_library, size: 48, color: Colors.grey[400]),
+                  const SizedBox(height: 8),
+                  Text(
+                    'No items added yet',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Tap "Add Item" below to add content to your series',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _seriesItems.length,
+            itemBuilder: (context, index) => _buildSeriesItemCard(index),
+          ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _addSeriesItem,
+            icon: const Icon(Icons.add),
+            label: const Text('Add Item'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              side: const BorderSide(color: AppTheme.primary),
+              foregroundColor: AppTheme.primary,
             ),
           ),
-        )
-      else
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _seriesItems.length,
-          itemBuilder: (context, index) => _buildSeriesItemCard(index),
         ),
-      const SizedBox(height: 12),
-      SizedBox(
-        width: double.infinity,
-        child: OutlinedButton.icon(
-          onPressed: _addSeriesItem,
-          icon: const Icon(Icons.add),
-          label: const Text('Add Item'),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            side: const BorderSide(color: AppTheme.primary),
-            foregroundColor: AppTheme.primary,
-          ),
-        ),
-      ),
-      const SizedBox(height: 16),
-      _buildTopicSelector(),
-      const SizedBox(height: 16),
-      _buildCategorySelector(),
-      const SizedBox(height: 16),
-      if (_selectedTopic == 'education' || _selectedTopic == 'entertainment')
-        _buildPricingSection(),
-      const SizedBox(height: 16),
-      _buildPublishOptions(isSeries: true),
-      const SizedBox(height: 24),
-      SizedBox(
-        width: double.infinity,
-        height: 54,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primary,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-          onPressed: _uploading ? null : _uploadSeries,
-          child: _uploading
-              ? Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: 150,
-                      child: LinearProgressIndicator(
-                        value: _uploadProgress >= 0 ? _uploadProgress : null,
-                        backgroundColor: Colors.white30,
-                        valueColor:
-                            const AlwaysStoppedAnimation<Color>(Colors.white),
+        const SizedBox(height: 16),
+        _buildTopicSelector(),
+        const SizedBox(height: 16),
+        _buildCategorySelector(),
+        const SizedBox(height: 16),
+        if (_selectedTopic == 'education' || _selectedTopic == 'entertainment')
+          _buildPricingSection(),
+        const SizedBox(height: 16),
+        _buildPublishOptions(isSeries: true),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          height: 54,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: _uploading ? null : _uploadSeries,
+            child: _uploading
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _uploadProgress >= 0
-                          ? '${(_uploadProgress * 100).clamp(0, 100).toStringAsFixed(0)}% uploaded'
-                          : 'Uploading...',
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                  ],
-                )
-              : Text(
-                  _publishSeriesNow
-                      ? 'Publish Series (${_seriesItems.length} items)'
-                      : 'Save Series Draft (${_seriesItems.length} items)',
-                  style: const TextStyle(fontSize: 16)),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: 150,
+                        child: LinearProgressIndicator(
+                          value: _uploadProgress >= 0 ? _uploadProgress : null,
+                          backgroundColor: Colors.white30,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _uploadProgress >= 0
+                            ? '${(_uploadProgress * 100).clamp(0, 100).toStringAsFixed(0)}% uploaded'
+                            : 'Uploading...',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    _publishSeriesNow
+                        ? 'Publish Series (${_seriesItems.length} items)'
+                        : 'Save Series Draft (${_seriesItems.length} items)',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+          ),
         ),
-      ),
-    ]);
+      ],
+    );
   }
 
   Widget _buildSeriesItemCard(int index) {
@@ -1557,302 +1702,335 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade300),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppTheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'Item ${index + 1}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryDark,
-                ),
-              ),
-            ),
-            const Spacer(),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
-              onPressed: () => _removeSeriesItem(index),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        const Text('Content Type'),
-        const SizedBox(height: 8),
-        Wrap(spacing: 8, children: [
-          ChoiceChip(
-            label: const Text('Video'),
-            selected: item.type == 'video',
-            onSelected: (s) => _updateSeriesItemType(index, 'video'),
-          ),
-          ChoiceChip(
-            label: const Text('Audio'),
-            selected: item.type == 'audio',
-            onSelected: (s) => _updateSeriesItemType(index, 'audio'),
-          ),
-          ChoiceChip(
-            label: const Text('Text'),
-            selected: item.type == 'text',
-            onSelected: (s) => _updateSeriesItemType(index, 'text'),
-          ),
-        ]),
-        const SizedBox(height: 12),
-        const Text('Title / Caption'),
-        const SizedBox(height: 6),
-        TextFormField(
-          key: ValueKey('series-caption-${item.id}'),
-          initialValue: item.caption,
-          decoration: const InputDecoration(
-            hintText: 'Enter a title or caption for this item',
-            border: OutlineInputBorder(),
-          ),
-          keyboardType: TextInputType.multiline,
-          textInputAction: TextInputAction.newline,
-          maxLines: 2,
-          onChanged: (value) => _updateSeriesItemCaption(index, value),
-        ),
-        const SizedBox(height: 12),
-        if (item.type != 'text') ...[
-          if (item.type == 'audio') ...[
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () => _pickFileForSeriesItem(index),
-                  icon: const Icon(Icons.library_music),
-                  label: Text(item.fileName ?? 'Select audio'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => _toggleSeriesAudioRecording(index),
-                  icon: Icon(
-                    _isSeriesAudioRecording &&
-                            _recordingSeriesItemIndex == index
-                        ? Icons.stop
-                        : Icons.mic_outlined,
-                  ),
-                  label: Text(
-                    _isSeriesAudioRecording &&
-                            _recordingSeriesItemIndex == index
-                        ? 'Stop recording'
-                        : 'Record audio',
-                  ),
-                ),
-              ],
-            ),
-            if (_isSeriesAudioRecording && _recordingSeriesItemIndex == index)
-              const Padding(
-                padding: EdgeInsets.only(top: 8.0),
-                child: Text('Recording in progress...'),
-              ),
-          ] else if (item.type == 'video') ...[
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () => _pickFileForSeriesItem(index),
-                  icon: const Icon(Icons.video_library_outlined),
-                  label: Text(item.fileName ?? 'Select video'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () =>
-                      _pickFileForSeriesItem(index, useCameraForVideo: true),
-                  icon: const Icon(Icons.videocam_outlined),
-                  label: const Text('Record video'),
-                ),
-              ],
-            ),
-          ] else ...[
-            OutlinedButton.icon(
-              onPressed: () => _pickFileForSeriesItem(index),
-              icon: const Icon(Icons.upload_file),
-              label: Text(item.fileName ?? 'Select ${item.type} file'),
-            ),
-          ],
-          if (item.type == 'video') ...[
-            const SizedBox(height: 12),
-            if (item.file != null)
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
               Container(
-                width: double.infinity,
-                constraints: const BoxConstraints(maxHeight: 240),
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade300),
+                  color: AppTheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: videoController != null &&
-                        videoController.value.isInitialized
-                    ? Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: AspectRatio(
-                                aspectRatio: videoController.value.aspectRatio,
-                                child: VideoPlayer(videoController),
-                              ),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              IconButton(
-                                onPressed: () {
-                                  if (videoController.value.isPlaying) {
-                                    videoController.pause();
-                                  } else {
-                                    videoController.play();
-                                  }
-                                  setState(() {});
-                                },
-                                icon: Icon(videoController.value.isPlaying
-                                    ? Icons.pause_circle
-                                    : Icons.play_circle),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  item.fileName ??
-                                      item.file!.path
-                                          .split(Platform.pathSeparator)
-                                          .last,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      )
-                    : const SizedBox(
-                        height: 120,
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
+                child: Text(
+                  'Item ${index + 1}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.primaryDark,
+                  ),
+                ),
               ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () => _pickSeriesItemThumbnail(index),
-                  icon: const Icon(Icons.image_outlined),
-                  label: const Text('Pick thumbnail'),
-                ),
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: item.file == null
-                      ? null
-                      : () =>
-                          _generateSeriesItemThumbnail(index, item.file!.path),
-                  icon: const Icon(Icons.auto_awesome),
-                  label: const Text('Auto-generate'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (item.thumbnail != null)
-              SizedBox(
-                height: 140,
-                width: double.infinity,
-                child: _safeImagePreview(item.thumbnail!, maxHeight: 140),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                onPressed: () => _removeSeriesItem(index),
               ),
-          ],
-        ] else ...[
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text('Content Type'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              ChoiceChip(
+                label: const Text('Video'),
+                selected: item.type == 'video',
+                onSelected: (s) => _updateSeriesItemType(index, 'video'),
+              ),
+              ChoiceChip(
+                label: const Text('Audio'),
+                selected: item.type == 'audio',
+                onSelected: (s) => _updateSeriesItemType(index, 'audio'),
+              ),
+              ChoiceChip(
+                label: const Text('Text'),
+                selected: item.type == 'text',
+                onSelected: (s) => _updateSeriesItemType(index, 'text'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text('Title / Caption'),
+          const SizedBox(height: 6),
           TextFormField(
-            key: ValueKey('series-text-${item.id}'),
+            key: ValueKey('series-caption-${item.id}'),
             initialValue: item.caption,
             decoration: const InputDecoration(
-              hintText: 'Enter text content',
+              hintText: 'Enter a title or caption for this item',
               border: OutlineInputBorder(),
             ),
-            maxLines: 6,
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.newline,
+            maxLines: 2,
             onChanged: (value) => _updateSeriesItemCaption(index, value),
           ),
+          const SizedBox(height: 12),
+          if (item.type != 'text') ...[
+            if (item.type == 'audio') ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => _pickFileForSeriesItem(index),
+                    icon: const Icon(Icons.library_music),
+                    label: Text(item.fileName ?? 'Select audio'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => _toggleSeriesAudioRecording(index),
+                    icon: Icon(
+                      _isSeriesAudioRecording &&
+                              _recordingSeriesItemIndex == index
+                          ? Icons.stop
+                          : Icons.mic_outlined,
+                    ),
+                    label: Text(
+                      _isSeriesAudioRecording &&
+                              _recordingSeriesItemIndex == index
+                          ? 'Stop recording'
+                          : 'Record audio',
+                    ),
+                  ),
+                ],
+              ),
+              if (_isSeriesAudioRecording && _recordingSeriesItemIndex == index)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8.0),
+                  child: Text('Recording in progress...'),
+                ),
+            ] else if (item.type == 'video') ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => _pickFileForSeriesItem(index),
+                    icon: const Icon(Icons.video_library_outlined),
+                    label: Text(item.fileName ?? 'Select video'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () =>
+                        _pickFileForSeriesItem(index, useCameraForVideo: true),
+                    icon: const Icon(Icons.videocam_outlined),
+                    label: const Text('Record video'),
+                  ),
+                ],
+              ),
+            ] else ...[
+              OutlinedButton.icon(
+                onPressed: () => _pickFileForSeriesItem(index),
+                icon: const Icon(Icons.upload_file),
+                label: Text(item.fileName ?? 'Select ${item.type} file'),
+              ),
+            ],
+            if (item.type == 'video') ...[
+              const SizedBox(height: 12),
+              if (item.file != null)
+                Container(
+                  width: double.infinity,
+                  constraints: const BoxConstraints(maxHeight: 240),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child:
+                      videoController != null &&
+                          videoController.value.isInitialized
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: AspectRatio(
+                                  aspectRatio:
+                                      videoController.value.aspectRatio,
+                                  child: VideoPlayer(videoController),
+                                ),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    if (videoController.value.isPlaying) {
+                                      videoController.pause();
+                                    } else {
+                                      videoController.play();
+                                    }
+                                    setState(() {});
+                                  },
+                                  icon: Icon(
+                                    videoController.value.isPlaying
+                                        ? Icons.pause_circle
+                                        : Icons.play_circle,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    item.fileName ??
+                                        item.file!.path
+                                            .split(Platform.pathSeparator)
+                                            .last,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        )
+                      : const SizedBox(
+                          height: 120,
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => _pickSeriesItemThumbnail(index),
+                    icon: const Icon(Icons.image_outlined),
+                    label: const Text('Pick thumbnail'),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: item.file == null
+                        ? null
+                        : () => _generateSeriesItemThumbnail(
+                            index,
+                            item.file!.path,
+                          ),
+                    icon: const Icon(Icons.auto_awesome),
+                    label: const Text('Auto-generate'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (item.thumbnail != null)
+                SizedBox(
+                  height: 140,
+                  width: double.infinity,
+                  child: _safeImagePreview(item.thumbnail!, maxHeight: 140),
+                ),
+            ],
+          ] else ...[
+            TextFormField(
+              key: ValueKey('series-text-${item.id}'),
+              initialValue: item.caption,
+              decoration: const InputDecoration(
+                hintText: 'Enter text content',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 6,
+              onChanged: (value) => _updateSeriesItemCaption(index, value),
+            ),
+          ],
         ],
-      ]),
+      ),
     );
   }
 
   Widget _buildTopicSelector() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Topic (required)',
-          style: TextStyle(fontWeight: FontWeight.w600)),
-      const SizedBox(height: 8),
-      Wrap(spacing: 8, runSpacing: 6, children: [
-        ChoiceChip(
-          label: const Text('Entertainment'),
-          selected: _selectedTopic == 'entertainment',
-          selectedColor: Colors.blue.shade200,
-          backgroundColor: Colors.blue.shade50,
-          onSelected: (s) => setState(() {
-            _selectedTopic = s ? 'entertainment' : null;
-            _computePricePreview();
-          }),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Topic (required)',
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
-        ChoiceChip(
-          label: const Text('Education'),
-          selected: _selectedTopic == 'education',
-          selectedColor: Colors.blue.shade600,
-          backgroundColor: Colors.blue.shade100,
-          labelStyle: TextStyle(
-            color: _selectedTopic == 'education'
-                ? Colors.white
-                : Colors.blue.shade700,
-          ),
-          onSelected: (s) => setState(() {
-            _selectedTopic = s ? 'education' : null;
-            _computePricePreview();
-          }),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          children: [
+            ChoiceChip(
+              label: const Text('Entertainment'),
+              selected: _selectedTopic == 'entertainment',
+              selectedColor: Colors.blue.shade200,
+              backgroundColor: Colors.blue.shade50,
+              onSelected: (s) => setState(() {
+                _selectedTopic = s ? 'entertainment' : null;
+                _computePricePreview();
+              }),
+            ),
+            ChoiceChip(
+              label: const Text('Education'),
+              selected: _selectedTopic == 'education',
+              selectedColor: Colors.blue.shade600,
+              backgroundColor: Colors.blue.shade100,
+              labelStyle: TextStyle(
+                color: _selectedTopic == 'education'
+                    ? Colors.white
+                    : Colors.blue.shade700,
+              ),
+              onSelected: (s) => setState(() {
+                _selectedTopic = s ? 'education' : null;
+                _computePricePreview();
+              }),
+            ),
+            ChoiceChip(
+              label: const Text('Infotainment'),
+              selected: _selectedTopic == 'infotainment',
+              selectedColor: Colors.lightBlue.shade300,
+              backgroundColor: Colors.lightBlue.shade50,
+              onSelected: (s) => setState(() {
+                _selectedTopic = s ? 'infotainment' : null;
+                _computePricePreview();
+              }),
+            ),
+          ],
         ),
-        ChoiceChip(
-          label: const Text('Infotainment'),
-          selected: _selectedTopic == 'infotainment',
-          selectedColor: Colors.lightBlue.shade300,
-          backgroundColor: Colors.lightBlue.shade50,
-          onSelected: (s) => setState(() {
-            _selectedTopic = s ? 'infotainment' : null;
-            _computePricePreview();
-          }),
-        ),
-      ]),
-    ]);
+      ],
+    );
   }
 
   Widget _buildCategorySelector() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Category', style: TextStyle(fontWeight: FontWeight.w600)),
-      const SizedBox(height: 8),
-      if (_loadingCategories)
-        const Center(child: CircularProgressIndicator())
-      else if (_categoriesError != null)
-        Text(_categoriesError!, style: const TextStyle(color: Colors.red))
-      else if (_categories.isNotEmpty)
-        GestureDetector(
-          onTap: _onCategoryTap,
-          child: InputDecorator(
-            decoration: const InputDecoration(border: OutlineInputBorder()),
-            child: Row(children: [
-              Expanded(
-                child: Text(_selectedCategoryId != null
-                    ? (_categories
-                            .firstWhere(
-                                (c) =>
-                                    c is Map && c['id'] == _selectedCategoryId,
-                                orElse: () => {'name': 'Unknown'})['name']
-                            ?.toString() ??
-                        'Select category')
-                    : 'Select category'),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Category', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        if (_loadingCategories)
+          const Center(child: CircularProgressIndicator())
+        else if (_categoriesError != null)
+          Text(_categoriesError!, style: const TextStyle(color: Colors.red))
+        else if (_categories.isNotEmpty)
+          GestureDetector(
+            onTap: _onCategoryTap,
+            child: InputDecorator(
+              decoration: const InputDecoration(border: OutlineInputBorder()),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _selectedCategoryId != null
+                          ? (_categories
+                                    .firstWhere(
+                                      (c) =>
+                                          c is Map &&
+                                          c['id'] == _selectedCategoryId,
+                                      orElse: () => {'name': 'Unknown'},
+                                    )['name']
+                                    ?.toString() ??
+                                'Select category')
+                          : 'Select category',
+                    ),
+                  ),
+                  const Icon(Icons.arrow_drop_down),
+                ],
               ),
-              const Icon(Icons.arrow_drop_down),
-            ]),
+            ),
           ),
-        ),
-    ]);
+      ],
+    );
   }
 
   Color _getTopicColor() {
@@ -1889,210 +2067,224 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
     final topicColor = _getTopicColor();
     final topicBgColor = _getTopicBackgroundColor();
 
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Pricing', style: TextStyle(fontWeight: FontWeight.w600)),
-      const SizedBox(height: 8),
-      if (_selectedType == 'video' ||
-          _selectedType == 'short' ||
-          _selectedType == 'story' ||
-          _selectedType == 'audio') ...[
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Pricing', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        if (_selectedType == 'video' ||
+            _selectedType == 'short' ||
+            _selectedType == 'story' ||
+            _selectedType == 'audio') ...[
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: topicBgColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _isCalculatingDuration ? Icons.hourglass_empty : Icons.timer,
+                  color: topicColor,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _isCalculatingDuration
+                      ? Text(
+                          'Detecting duration...',
+                          style: TextStyle(color: topicColor),
+                        )
+                      : Text(
+                          _durationController.text.isNotEmpty
+                              ? 'Duration: ${_formatDuration(int.tryParse(_durationController.text) ?? 0)} (${_durationController.text} seconds)'
+                              : 'Duration will be detected automatically',
+                          style: TextStyle(color: topicColor),
+                        ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (_selectedType == 'text') ...[
+          Builder(
+            builder: (context) {
+              final wordCount = _captionController.text.trim().isEmpty
+                  ? 0
+                  : _captionController.text.trim().split(RegExp(r'\s+')).length;
+              return Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: topicBgColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.text_fields, color: topicColor, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Word count: $wordCount words',
+                        style: TextStyle(color: topicColor),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+        ],
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: topicBgColor,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                _isCalculatingDuration ? Icons.hourglass_empty : Icons.timer,
-                color: topicColor,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _isCalculatingDuration
-                    ? Text(
-                        'Detecting duration...',
-                        style: TextStyle(color: topicColor),
-                      )
-                    : Text(
-                        _durationController.text.isNotEmpty
-                            ? 'Duration: ${_formatDuration(int.tryParse(_durationController.text) ?? 0)} (${_durationController.text} seconds)'
-                            : 'Duration will be detected automatically',
-                        style: TextStyle(color: topicColor),
-                      ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-      ],
-      if (_selectedType == 'text') ...[
-        Builder(
-          builder: (context) {
-            final wordCount = _captionController.text.trim().isEmpty
-                ? 0
-                : _captionController.text.trim().split(RegExp(r'\s+')).length;
-            return Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: topicBgColor,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
+              Row(
                 children: [
-                  Icon(Icons.text_fields, color: topicColor, size: 20),
+                  Icon(Icons.attach_money, size: 18, color: topicColor),
                   const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Word count: $wordCount words',
-                      style: TextStyle(color: topicColor),
+                  Text(
+                    _selectedTopic == 'entertainment'
+                        ? 'Price: £${_computedPrice?.toStringAsFixed(2) ?? '0.00'}'
+                        : 'Computed Price: £${_computedPrice?.toStringAsFixed(2) ?? '0.00'}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: topicColor,
                     ),
                   ),
                 ],
               ),
-            );
-          },
-        ),
-        const SizedBox(height: 8),
-      ],
-      Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: topicBgColor,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(
-            children: [
-              Icon(Icons.attach_money, size: 18, color: topicColor),
-              const SizedBox(width: 8),
+              const SizedBox(height: 4),
               Text(
                 _selectedTopic == 'entertainment'
-                    ? 'Price: £${_computedPrice?.toStringAsFixed(2) ?? '0.00'}'
-                    : 'Computed Price: £${_computedPrice?.toStringAsFixed(2) ?? '0.00'}',
+                    ? _getEntertainmentPricingTier()
+                    : (_computedPrice == 0
+                          ? 'Short content: Free with ads'
+                          : _computedPrice! <= 2
+                          ? 'Standard pricing (£1-£2)'
+                          : 'Premium pricing (£3-£5)'),
                 style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: topicColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _selectedTopic == 'entertainment'
-                ? _getEntertainmentPricingTier()
-                : (_computedPrice == 0
-                    ? 'Short content: Free with ads'
-                    : _computedPrice! <= 2
-                        ? 'Standard pricing (£1-£2)'
-                        : 'Premium pricing (£3-£5)'),
-            style: TextStyle(
-                fontSize: 12, color: topicColor.withValues(alpha: 0.8)),
-          ),
-        ]),
-      ),
-      if (_selectedTopic == 'entertainment') ...[
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: topicBgColor,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.card_membership, size: 20, color: topicColor),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Users can subscribe to access all entertainment content',
-                  style: TextStyle(fontSize: 12, color: topicColor),
+                  fontSize: 12,
+                  color: topicColor.withValues(alpha: 0.8),
                 ),
               ),
             ],
           ),
         ),
-      ],
-      if (_selectedTopic == 'education' && _canSetCustomPrice) ...[
-        const SizedBox(height: 12),
-        SwitchListTile(
-          title: const Text('Set custom price'),
-          subtitle: const Text('Override auto-computed price (£1-£5)'),
-          value: _priceController.text.isNotEmpty,
-          onChanged: (value) {
-            setState(() {
-              if (!value) {
-                _priceController.clear();
-              }
-            });
-          },
-          contentPadding: EdgeInsets.zero,
-        ),
-        if (_priceController.text.isNotEmpty) ...[
-          TextField(
-            controller: _priceController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Custom Price (£)',
-              hintText: 'Enter price between £1 and £5',
-              border: OutlineInputBorder(),
-              prefixText: '£ ',
+        if (_selectedTopic == 'entertainment') ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: topicBgColor,
+              borderRadius: BorderRadius.circular(8),
             ),
-            onChanged: (_) => setState(() {}),
+            child: Row(
+              children: [
+                Icon(Icons.card_membership, size: 20, color: topicColor),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Users can subscribe to access all entertainment content',
+                    style: TextStyle(fontSize: 12, color: topicColor),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
+        if (_selectedTopic == 'education' && _canSetCustomPrice) ...[
+          const SizedBox(height: 12),
+          SwitchListTile(
+            title: const Text('Set custom price'),
+            subtitle: const Text('Override auto-computed price (£1-£5)'),
+            value: _priceController.text.isNotEmpty,
+            onChanged: (value) {
+              setState(() {
+                if (!value) {
+                  _priceController.clear();
+                }
+              });
+            },
+            contentPadding: EdgeInsets.zero,
+          ),
+          if (_priceController.text.isNotEmpty) ...[
+            TextField(
+              controller: _priceController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Custom Price (£)',
+                hintText: 'Enter price between £1 and £5',
+                border: OutlineInputBorder(),
+                prefixText: '£ ',
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+          ],
+        ],
+        const SizedBox(height: 8),
+        Text(
+          _selectedTopic == 'entertainment'
+              ? 'Entertainment pricing based on duration. Users can subscribe for unlimited access.'
+              : (_canSetCustomPrice
+                    ? 'As an institute, you can set custom pricing (£1-£5) for your educational content.'
+                    : 'Pricing is auto-computed based on content length. Institute users can set custom prices.'),
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+        ),
       ],
-      const SizedBox(height: 8),
-      Text(
-        _selectedTopic == 'entertainment'
-            ? 'Entertainment pricing based on duration. Users can subscribe for unlimited access.'
-            : (_canSetCustomPrice
-                ? 'As an institute, you can set custom pricing (£1-£5) for your educational content.'
-                : 'Pricing is auto-computed based on content length. Institute users can set custom prices.'),
-        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-      ),
-    ]);
+    );
   }
 
   Widget _buildSingleContentUI() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Type (required)'),
-      const SizedBox(height: 6),
-      DropdownButtonFormField<String>(
-        initialValue: _selectedType,
-        items: const [
-          DropdownMenuItem(value: 'image', child: Text('image')),
-          DropdownMenuItem(value: 'video', child: Text('video')),
-          DropdownMenuItem(value: 'short', child: Text('short')),
-          DropdownMenuItem(value: 'story', child: Text('story')),
-          DropdownMenuItem(value: 'audio', child: Text('audio')),
-          DropdownMenuItem(value: 'text', child: Text('text')),
-        ],
-        onChanged: (v) {
-          if (v == null) return;
-          setState(() {
-            if (_selectedType == 'audio') {
-              _stopRecordingIfActive();
-            }
-            _selectedType = v;
-            _pickedFile = null;
-            _pickedFileName = null;
-            _thumbnailFile = null;
-            _durationController.clear();
-          });
-          _computePricePreview();
-        },
-        decoration: const InputDecoration(border: OutlineInputBorder()),
-      ),
-      const SizedBox(height: 12),
-      const Text('Caption'),
-      const SizedBox(height: 6),
-      TextField(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Type (required)'),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          initialValue: _selectedType,
+          items: const [
+            DropdownMenuItem(value: 'image', child: Text('image')),
+            DropdownMenuItem(value: 'video', child: Text('video')),
+            DropdownMenuItem(value: 'short', child: Text('short')),
+            DropdownMenuItem(value: 'story', child: Text('story')),
+            DropdownMenuItem(value: 'audio', child: Text('audio')),
+            DropdownMenuItem(value: 'text', child: Text('text')),
+          ],
+          onChanged: (v) {
+            if (v == null) return;
+            setState(() {
+              if (_selectedType == 'audio') {
+                _stopRecordingIfActive();
+              }
+              _selectedType = v;
+              _pickedFile = null;
+              _pickedFileName = null;
+              _thumbnailFile = null;
+              _durationController.clear();
+            });
+            _computePricePreview();
+          },
+          decoration: const InputDecoration(border: OutlineInputBorder()),
+        ),
+        const SizedBox(height: 12),
+        const Text('Caption'),
+        const SizedBox(height: 6),
+        TextField(
           controller: _captionController,
           decoration: const InputDecoration(
-              hintText: 'Caption (optional)', border: OutlineInputBorder()),
+            hintText: 'Caption (optional)',
+            border: OutlineInputBorder(),
+          ),
           keyboardType: TextInputType.multiline,
           textInputAction: TextInputAction.newline,
           maxLines: null,
@@ -2102,270 +2294,352 @@ class _UploadContentScreenState extends State<UploadContentScreen> {
                     _selectedTopic == 'entertainment')) {
               _computePricePreview();
             }
-          }),
-      const SizedBox(height: 12),
-      const Text('Topic (required)'),
-      const SizedBox(height: 6),
-      Wrap(spacing: 8, runSpacing: 6, children: [
-        ChoiceChip(
-            label: const Text('Entertainment'),
-            selected: _selectedTopic == 'entertainment',
-            selectedColor: Colors.blue.shade200,
-            backgroundColor: Colors.blue.shade50,
-            onSelected: (s) => setState(() {
-                  _selectedTopic = s ? 'entertainment' : null;
-                  _computePricePreview();
-                })),
-        ChoiceChip(
-            label: const Text('Education'),
-            selected: _selectedTopic == 'education',
-            selectedColor: Colors.blue.shade600,
-            backgroundColor: Colors.blue.shade100,
-            labelStyle: TextStyle(
-              color: _selectedTopic == 'education'
-                  ? Colors.white
-                  : Colors.blue.shade700,
-            ),
-            onSelected: (s) => setState(() {
-                  _selectedTopic = s ? 'education' : null;
-                  _computePricePreview();
-                })),
-        ChoiceChip(
-            label: const Text('Infotainment'),
-            selected: _selectedTopic == 'infotainment',
-            selectedColor: Colors.lightBlue.shade300,
-            backgroundColor: Colors.lightBlue.shade50,
-            onSelected: (s) => setState(() {
-                  _selectedTopic = s ? 'infotainment' : null;
-                  _computePricePreview();
-                })),
-      ]),
-      const SizedBox(height: 12),
-      _buildPricingSection(),
-      const SizedBox(height: 12),
-      if (_selectedType != 'text') ...[
-        const Text('File'),
+          },
+        ),
+        const SizedBox(height: 12),
+        const Text('Topic (required)'),
         const SizedBox(height: 6),
-        Container(
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          children: [
+            ChoiceChip(
+              label: const Text('Entertainment'),
+              selected: _selectedTopic == 'entertainment',
+              selectedColor: Colors.blue.shade200,
+              backgroundColor: Colors.blue.shade50,
+              onSelected: (s) => setState(() {
+                _selectedTopic = s ? 'entertainment' : null;
+                _computePricePreview();
+              }),
+            ),
+            ChoiceChip(
+              label: const Text('Education'),
+              selected: _selectedTopic == 'education',
+              selectedColor: Colors.blue.shade600,
+              backgroundColor: Colors.blue.shade100,
+              labelStyle: TextStyle(
+                color: _selectedTopic == 'education'
+                    ? Colors.white
+                    : Colors.blue.shade700,
+              ),
+              onSelected: (s) => setState(() {
+                _selectedTopic = s ? 'education' : null;
+                _computePricePreview();
+              }),
+            ),
+            ChoiceChip(
+              label: const Text('Infotainment'),
+              selected: _selectedTopic == 'infotainment',
+              selectedColor: Colors.lightBlue.shade300,
+              backgroundColor: Colors.lightBlue.shade50,
+              onSelected: (s) => setState(() {
+                _selectedTopic = s ? 'infotainment' : null;
+                _computePricePreview();
+              }),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _buildPricingSection(),
+        const SizedBox(height: 12),
+        if (_selectedType != 'text') ...[
+          const Text('File'),
+          const SizedBox(height: 6),
+          Container(
             width: double.infinity,
             height: 240,
             decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300)),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
             child: Center(
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.upload_file, size: 36, color: Colors.grey[600]),
-              const SizedBox(height: 8),
-              if (_selectedType == 'audio') ...[
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    OutlinedButton.icon(
-                        onPressed: _pickAudioFromDevice,
-                        icon: const Icon(Icons.library_music),
-                        label: const Text('Select audio')),
-                    OutlinedButton.icon(
-                        onPressed: _toggleRecording,
-                        icon: Icon(
-                            _isRecording ? Icons.stop : Icons.mic_outlined),
-                        label: Text(
-                            _isRecording ? 'Stop recording' : 'Record audio')),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.upload_file, size: 36, color: Colors.grey[600]),
+                  const SizedBox(height: 8),
+                  if (_selectedType == 'audio') ...[
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: _pickAudioFromDevice,
+                          icon: const Icon(Icons.library_music),
+                          label: const Text('Select audio'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: _toggleRecording,
+                          icon: Icon(
+                            _isRecording ? Icons.stop : Icons.mic_outlined,
+                          ),
+                          label: Text(
+                            _isRecording ? 'Stop recording' : 'Record audio',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else if (_selectedType == 'video' ||
+                      _selectedType == 'short' ||
+                      _selectedType == 'story') ...[
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: _chooseFile,
+                          icon: const Icon(Icons.video_library_outlined),
+                          label: const Text('Select video'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: _recordSingleVideo,
+                          icon: const Icon(Icons.videocam_outlined),
+                          label: const Text('Record video'),
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    TextButton(
+                      onPressed: _chooseFile,
+                      child: Text(_pickedFileName ?? 'Choose file'),
+                    ),
                   ],
-                ),
-              ] else if (_selectedType == 'video' ||
-                  _selectedType == 'short' ||
-                  _selectedType == 'story') ...[
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    OutlinedButton.icon(
-                        onPressed: _chooseFile,
-                        icon: const Icon(Icons.video_library_outlined),
-                        label: const Text('Select video')),
-                    OutlinedButton.icon(
-                        onPressed: _recordSingleVideo,
-                        icon: const Icon(Icons.videocam_outlined),
-                        label: const Text('Record video')),
+                  if (_pickedFile != null) ...[
+                    const SizedBox(height: 8),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: 220,
+                        maxHeight: 120,
+                      ),
+                      child: _selectedType == 'image'
+                          ? _safeImagePreview(
+                              _pickedFile!,
+                              maxWidth: 220,
+                              maxHeight: 120,
+                            )
+                          : (_selectedType == 'audio'
+                                ? Text('Selected: ${_pickedFileName ?? ''}')
+                                : (_thumbnailFile != null
+                                      ? _safeImagePreview(
+                                          _thumbnailFile!,
+                                          maxWidth: 220,
+                                          maxHeight: 120,
+                                        )
+                                      : Text(
+                                          'Selected: ${_pickedFileName ?? ''}',
+                                        ))),
+                    ),
+                  ] else if (_selectedType == 'audio' && _isRecording) ...[
+                    const SizedBox(height: 8),
+                    const Text('Recording in progress...'),
                   ],
-                ),
-              ] else ...[
-                TextButton(
-                    onPressed: _chooseFile,
-                    child: Text(_pickedFileName ?? 'Choose file')),
-              ],
-              if (_pickedFile != null) ...[
-                const SizedBox(height: 8),
-                ConstrainedBox(
-                    constraints:
-                        const BoxConstraints(maxWidth: 220, maxHeight: 120),
-                    child: _selectedType == 'image'
-                        ? _safeImagePreview(_pickedFile!,
-                            maxWidth: 220, maxHeight: 120)
-                        : (_selectedType == 'audio'
-                            ? Text('Selected: ${_pickedFileName ?? ''}')
-                            : (_thumbnailFile != null
-                                ? _safeImagePreview(_thumbnailFile!,
-                                    maxWidth: 220, maxHeight: 120)
-                                : Text('Selected: ${_pickedFileName ?? ''}'))))
-              ] else if (_selectedType == 'audio' && _isRecording) ...[
-                const SizedBox(height: 8),
-                const Text('Recording in progress...'),
-              ]
-            ]))),
-      ] else ...[
-        const Padding(
+                ],
+              ),
+            ),
+          ),
+        ] else ...[
+          const Padding(
             padding: EdgeInsets.symmetric(vertical: 8.0),
-            child: Text('Type your text or import a .txt file',
-                style: TextStyle(color: Colors.grey))),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
+            child: Text(
+              'Type your text or import a .txt file',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
             onPressed: _pickTextFile,
             icon: const Icon(Icons.upload_file),
-            label: const Text('Upload .txt file to fill caption')),
-        if (_pickedFileName != null && _selectedType == 'text') ...[
-          const SizedBox(height: 6),
-          Text('Loaded: $_pickedFileName',
-              style: const TextStyle(color: Colors.grey)),
+            label: const Text('Upload .txt file to fill caption'),
+          ),
+          if (_pickedFileName != null && _selectedType == 'text') ...[
+            const SizedBox(height: 6),
+            Text(
+              'Loaded: $_pickedFileName',
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ],
         ],
-      ],
-      const SizedBox(height: 12),
-      if (_selectedType == 'video' ||
-          _selectedType == 'short' ||
-          _selectedType == 'story') ...[
-        Row(children: [
-          ElevatedButton(
-              onPressed: _generateThumbnail,
-              child: const Text('Generate thumbnail')),
-          const SizedBox(width: 8),
-          ElevatedButton(
-              onPressed: _pickThumbnailManually,
-              child: const Text('Pick thumbnail'))
-        ]),
-        const SizedBox(height: 8),
-        if (_thumbnailFile != null) ...[
-          const Text('Thumbnail (read-only)'),
-          const SizedBox(height: 6),
-          ConstrainedBox(
+        const SizedBox(height: 12),
+        if (_selectedType == 'video' ||
+            _selectedType == 'short' ||
+            _selectedType == 'story') ...[
+          Row(
+            children: [
+              ElevatedButton(
+                onPressed: _generateThumbnail,
+                child: const Text('Generate thumbnail'),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: _pickThumbnailManually,
+                child: const Text('Pick thumbnail'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (_thumbnailFile != null) ...[
+            const Text('Thumbnail (read-only)'),
+            const SizedBox(height: 6),
+            ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 220, maxHeight: 120),
-              child: _safeImagePreview(_thumbnailFile!,
-                  maxWidth: 220, maxHeight: 120)),
-          const SizedBox(height: 12)
+              child: _safeImagePreview(
+                _thumbnailFile!,
+                maxWidth: 220,
+                maxHeight: 120,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
         ],
-      ],
-      const Text('Category (required)'),
-      const SizedBox(height: 6),
-      if (_loadingCategories) ...[
-        const Center(
+        const Text('Category (required)'),
+        const SizedBox(height: 6),
+        if (_loadingCategories) ...[
+          const Center(
             child: SizedBox(
-                width: 24, height: 24, child: CircularProgressIndicator()))
-      ] else if (_categoriesError != null) ...[
-        Row(children: [
-          Expanded(
-              child: Text(_categoriesError!,
-                  style: const TextStyle(color: Colors.red))),
-          TextButton(onPressed: _loadCategories, child: const Text('Retry'))
-        ])
-      ] else if (_categories.isNotEmpty) ...[
-        GestureDetector(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        ] else if (_categoriesError != null) ...[
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _categoriesError!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+              TextButton(
+                onPressed: _loadCategories,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ] else if (_categories.isNotEmpty) ...[
+          GestureDetector(
             onTap: _onCategoryTap,
             child: InputDecorator(
-                decoration: const InputDecoration(border: OutlineInputBorder()),
-                child: Row(children: [
+              decoration: const InputDecoration(border: OutlineInputBorder()),
+              child: Row(
+                children: [
                   if (_selectedCategoryId != null)
-                    Builder(builder: (_) {
-                      final cat = _categories.firstWhere(
+                    Builder(
+                      builder: (_) {
+                        final cat = _categories.firstWhere(
                           (c) => c is Map && c['id'] == _selectedCategoryId,
-                          orElse: () => null);
-                      final image = (cat is Map && cat['image_url'] != null)
-                          ? cat['image_url'] as String?
-                          : null;
-                      return image != null
-                          ? ClipOval(
-                              child: Image.network(image,
+                          orElse: () => null,
+                        );
+                        final image = (cat is Map && cat['image_url'] != null)
+                            ? cat['image_url'] as String?
+                            : null;
+                        return image != null
+                            ? ClipOval(
+                                child: Image.network(
+                                  image,
                                   width: 24,
                                   height: 24,
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => Container(
-                                      width: 24,
-                                      height: 24,
-                                      color: Colors.grey[300],
-                                      child: const Icon(Icons.broken_image,
-                                          size: 16, color: Colors.grey))))
-                          : const SizedBox.shrink();
-                    }),
+                                    width: 24,
+                                    height: 24,
+                                    color: Colors.grey[300],
+                                    child: const Icon(
+                                      Icons.broken_image,
+                                      size: 16,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : const SizedBox.shrink();
+                      },
+                    ),
                   const SizedBox(width: 8),
                   Expanded(
-                      child: Text(
-                          _selectedCategoryId != null
-                              ? (_categories
-                                      .firstWhere(
-                                          (c) =>
-                                              c is Map &&
-                                              c['id'] == _selectedCategoryId,
-                                          orElse: () =>
-                                              {'name': 'Unknown'})['name']
-                                      ?.toString() ??
-                                  'Unknown')
-                              : (_otherCategoryName ?? 'Select category'),
-                          overflow: TextOverflow.ellipsis)),
-                  const Icon(Icons.arrow_drop_down)
-                ]))),
-      ] else ...[
-        const Text('No categories available')
-      ],
-      const SizedBox(height: 16),
-      _buildPublishOptions(isSeries: false),
-      const SizedBox(height: 16),
-      SizedBox(
+                    child: Text(
+                      _selectedCategoryId != null
+                          ? (_categories
+                                    .firstWhere(
+                                      (c) =>
+                                          c is Map &&
+                                          c['id'] == _selectedCategoryId,
+                                      orElse: () => {'name': 'Unknown'},
+                                    )['name']
+                                    ?.toString() ??
+                                'Unknown')
+                          : (_otherCategoryName ?? 'Select category'),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const Icon(Icons.arrow_drop_down),
+                ],
+              ),
+            ),
+          ),
+        ] else ...[
+          const Text('No categories available'),
+        ],
+        const SizedBox(height: 16),
+        _buildPublishOptions(isSeries: false),
+        const SizedBox(height: 16),
+        SizedBox(
           width: double.infinity,
           height: 54,
           child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.lightBlue,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12))),
-              onPressed: _uploading ? null : _upload,
-              child: _uploading
-                  ? Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            )),
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          width: 150,
-                          child: LinearProgressIndicator(
-                            value:
-                                _uploadProgress >= 0 ? _uploadProgress : null,
-                            backgroundColor: Colors.white30,
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                                Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.lightBlue,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: _uploading ? null : _upload,
+            child: _uploading
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: 150,
+                        child: LinearProgressIndicator(
+                          value: _uploadProgress >= 0 ? _uploadProgress : null,
+                          backgroundColor: Colors.white30,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _uploadProgress >= 0
-                              ? '${(_uploadProgress * 100).clamp(0, 100).toStringAsFixed(0)}% uploaded'
-                              : 'Uploading...',
-                          style: const TextStyle(
-                              color: Colors.white, fontSize: 12),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _uploadProgress >= 0
+                            ? '${(_uploadProgress * 100).clamp(0, 100).toStringAsFixed(0)}% uploaded'
+                            : 'Uploading...',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
                         ),
-                      ],
-                    )
-                  : Text(
-                      _publishSingleNow ? 'Publish' : 'Save as Draft',
-                      style: const TextStyle(fontSize: 16),
-                    ))),
-      const SizedBox(height: 24),
-    ]);
+                      ),
+                    ],
+                  )
+                : Text(
+                    _publishSingleNow ? 'Publish' : 'Save as Draft',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
   }
 }

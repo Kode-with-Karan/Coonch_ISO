@@ -271,7 +271,7 @@ class _AllCategoriesScreenState extends State<AllCategoriesScreen> {
                                             decoration: BoxDecoration(
                                               color: selected
                                                   ? AppTheme.primary
-                                                      .withOpacity(0.12)
+                                                      .withValues(alpha: 0.12)
                                                   : Colors.white,
                                               shape: BoxShape.circle,
                                             ),

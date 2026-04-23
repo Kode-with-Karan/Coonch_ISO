@@ -27,6 +27,7 @@ dependencies:
   qr_flutter: ^4.1.0
   flutter_stripe: ^9.6.0
   meta: ^1.11.0
+  msix: ^3.16.13
 
 dev_dependencies:
   flutter_test:

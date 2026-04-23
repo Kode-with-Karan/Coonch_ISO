@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
@@ -23,6 +24,50 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
   VideoPlayerController? _videoController;
   bool _uploading = false;
   final TextEditingController _captionController = TextEditingController();
+
+  Future<void> _handlePickedFile(XFile? picked, {required bool isVideo}) async {
+    if (picked == null || !mounted) return;
+    final path = picked.path;
+    if (path.isEmpty) {
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showWarning('Unable to use selected media. Please try again.');
+      return;
+    }
+
+    final file = File(path);
+    if (!await file.exists()) {
+      if (!mounted) return;
+      Provider.of<NotificationService>(
+        context,
+        listen: false,
+      ).showWarning('Selected media is unavailable. Please retry.');
+      return;
+    }
+
+    await _setSelectedMedia(file, isVideo: isVideo);
+  }
+
+  Future<void> _pickVideo({required ImageSource source}) async {
+    final picker = ImagePicker();
+    try {
+      final picked = await picker.pickVideo(source: source);
+      await _handlePickedFile(picked, isVideo: true);
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      Provider.of<NotificationService>(context, listen: false).showError(
+        NotificationService.formatMessage(
+          'Could not access video recorder/gallery: ${e.message ?? e.code}',
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Provider.of<NotificationService>(context, listen: false).showError(
+        NotificationService.formatMessage('Failed to pick video: $e'),
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -79,36 +124,56 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-    if (picked == null || !mounted) return;
-    await _setSelectedMedia(File(picked.path), isVideo: false);
+    try {
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      await _handlePickedFile(picked, isVideo: false);
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      Provider.of<NotificationService>(context, listen: false).showError(
+        NotificationService.formatMessage(
+          'Could not access photo library: ${e.message ?? e.code}',
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Provider.of<NotificationService>(context, listen: false).showError(
+        NotificationService.formatMessage('Failed to pick image: $e'),
+      );
+    }
   }
 
   Future<void> _takePhoto() async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 85,
-    );
-    if (picked == null || !mounted) return;
-    await _setSelectedMedia(File(picked.path), isVideo: false);
+    try {
+      final picked = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+      );
+      await _handlePickedFile(picked, isVideo: false);
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      Provider.of<NotificationService>(context, listen: false).showError(
+        NotificationService.formatMessage(
+          'Could not access camera: ${e.message ?? e.code}',
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Provider.of<NotificationService>(context, listen: false).showError(
+        NotificationService.formatMessage('Failed to capture photo: $e'),
+      );
+    }
   }
 
   Future<void> _pickVideoFromGallery() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickVideo(source: ImageSource.gallery);
-    if (picked == null || !mounted) return;
-    await _setSelectedMedia(File(picked.path), isVideo: true);
+    await _pickVideo(source: ImageSource.gallery);
   }
 
   Future<void> _recordVideo() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickVideo(source: ImageSource.camera);
-    if (picked == null || !mounted) return;
-    await _setSelectedMedia(File(picked.path), isVideo: true);
+    await _pickVideo(source: ImageSource.camera);
   }
 
   Future<void> _upload() async {

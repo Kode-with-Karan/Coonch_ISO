@@ -34,33 +34,47 @@ class _SignUpStep3State extends State<SignUpStep3> {
     });
 
     return Scaffold(
-      appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.arrow_back, color: Colors.black))),
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: LayoutBuilder(builder: (context, constraints) {
-          final isWide = kIsWeb || constraints.maxWidth >= 900;
-          final crossAxisCount = constraints.maxWidth >= 1100
-              ? 4
-              : (constraints.maxWidth >= 700 ? 3 : 2);
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = kIsWeb || constraints.maxWidth >= 900;
+            final crossAxisCount = constraints.maxWidth >= 1100
+                ? 4
+                : (constraints.maxWidth >= 700 ? 3 : 2);
 
-          return Center(
-            child: ConstrainedBox(
-              constraints:
-                  BoxConstraints(maxWidth: isWide ? 980 : double.infinity),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isWide ? 980 : double.infinity,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 0),
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Align(
+                        alignment: Alignment.topLeft,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       const Center(
-                          child: Text('Choose Categories',
-                              style: TextStyle(
-                                  fontSize: 28, fontWeight: FontWeight.w800))),
+                        child: Text(
+                          'Choose Categories',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 12),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 8.0),
@@ -103,18 +117,21 @@ class _SignUpStep3State extends State<SignUpStep3> {
                             }
 
                             return GestureDetector(
-                              onTap: () => setState(() => selected
-                                  ? _selected.remove(c)
-                                  : _selected.add(c)),
+                              onTap: () => setState(
+                                () => selected
+                                    ? _selected.remove(c)
+                                    : _selected.add(c),
+                              ),
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: AppTheme.primarySoft,
                                   borderRadius: BorderRadius.circular(22),
                                   border: Border.all(
-                                      color: selected
-                                          ? accent
-                                          : AppTheme.primaryMuted,
-                                      width: 2),
+                                    color: selected
+                                        ? accent
+                                        : AppTheme.primaryMuted,
+                                    width: 2,
+                                  ),
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -128,22 +145,28 @@ class _SignUpStep3State extends State<SignUpStep3> {
                                             : Colors.white,
                                         shape: BoxShape.circle,
                                       ),
-                                      child: Icon(icon,
-                                          size: 36,
-                                          color: selected
-                                              ? accent
-                                              : AppTheme.primaryDark),
+                                      child: Icon(
+                                        icon,
+                                        size: 36,
+                                        color: selected
+                                            ? accent
+                                            : AppTheme.primaryDark,
+                                      ),
                                     ),
                                     const SizedBox(height: 12),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 8.0),
-                                      child: Text(c,
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.black87)),
+                                        horizontal: 8.0,
+                                      ),
+                                      child: Text(
+                                        c,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -155,54 +178,70 @@ class _SignUpStep3State extends State<SignUpStep3> {
                       Container(
                         color: Colors.white,
                         padding: const EdgeInsets.only(top: 8, bottom: 12),
-                        child: Column(children: [
-                          SizedBox(
+                        child: Column(
+                          children: [
+                            SizedBox(
                               width: double.infinity,
                               height: 54,
                               child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppTheme.primary,
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12))),
-                                  onPressed: () async {
-                                    final auth = Provider.of<AuthProvider>(
-                                        context,
-                                        listen: false);
-                                    try {
-                                      await auth.refreshProfile();
-                                    } catch (_) {}
-                                    Navigator.of(context).pushAndRemoveUntil(
-                                        MaterialPageRoute(
-                                            builder: (_) => const HomeScreen()),
-                                        (route) => false);
-                                  },
-                                  child: const Text('Finish'))),
-                          const SizedBox(height: 8),
-                          Center(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                onPressed: () async {
+                                  final auth = Provider.of<AuthProvider>(
+                                    context,
+                                    listen: false,
+                                  );
+                                  try {
+                                    await auth.refreshProfile();
+                                  } catch (_) {}
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                      builder: (_) => const HomeScreen(),
+                                    ),
+                                    (route) => false,
+                                  );
+                                },
+                                child: const Text('Finish'),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Center(
                               child: TextButton(
-                                  onPressed: () async {
-                                    final auth = Provider.of<AuthProvider>(
-                                        context,
-                                        listen: false);
-                                    try {
-                                      await auth.refreshProfile();
-                                    } catch (_) {}
-                                    Navigator.of(context).pushAndRemoveUntil(
-                                        MaterialPageRoute(
-                                            builder: (_) => const HomeScreen()),
-                                        (route) => false);
-                                  },
-                                  child: const Text('Skip',
-                                      style:
-                                          TextStyle(color: Colors.lightBlue)))),
-                        ]),
+                                onPressed: () async {
+                                  final auth = Provider.of<AuthProvider>(
+                                    context,
+                                    listen: false,
+                                  );
+                                  try {
+                                    await auth.refreshProfile();
+                                  } catch (_) {}
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                      builder: (_) => const HomeScreen(),
+                                    ),
+                                    (route) => false,
+                                  );
+                                },
+                                child: const Text(
+                                  'Skip',
+                                  style: TextStyle(color: Colors.lightBlue),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ]),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          );
-        }),
+            );
+          },
+        ),
       ),
     );
   }

@@ -41,8 +41,10 @@ class _StoryViewerState extends State<StoryViewer>
     _groupIndex = widget.initialGroupIndex.clamp(0, widget.groups.length - 1);
     final currentGroup = widget.groups[_groupIndex];
     _index = widget.initialStoryIndex.clamp(0, currentGroup.length - 1);
-    _controller =
-        AnimationController(vsync: this, duration: _getDurationForCurrent());
+    _controller = AnimationController(
+      vsync: this,
+      duration: _getDurationForCurrent(),
+    );
 
     // Don't start animation yet - wait for content to load
     _controller.addStatusListener((status) {
@@ -95,8 +97,10 @@ class _StoryViewerState extends State<StoryViewer>
     final id = story['id']?.toString();
     if (id == null) return;
     final api = Provider.of<ApiService>(context, listen: false);
-    final notifications =
-        Provider.of<NotificationService>(context, listen: false);
+    final notifications = Provider.of<NotificationService>(
+      context,
+      listen: false,
+    );
     try {
       final res = await api.viewContent(id);
       final awarded =
@@ -176,8 +180,10 @@ class _StoryViewerState extends State<StoryViewer>
 
   Future<void> _toggleLike() async {
     final api = Provider.of<ApiService>(context, listen: false);
-    final notifications =
-        Provider.of<NotificationService>(context, listen: false);
+    final notifications = Provider.of<NotificationService>(
+      context,
+      listen: false,
+    );
     final story = widget.groups[_groupIndex][_index];
     final id = story['id']?.toString();
     if (id == null) return;
@@ -206,9 +212,170 @@ class _StoryViewerState extends State<StoryViewer>
         story['likes_count'] = previousCount;
         story['likes'] = previousCount;
       });
-      notifications
-          .showError(NotificationService.formatMessage('Failed to react: $e'));
+      notifications.showError(
+        NotificationService.formatMessage('Failed to react: $e'),
+      );
     }
+  }
+
+  Future<void> _showCommentsBottomSheet() async {
+    final story = widget.groups[_groupIndex][_index];
+    final contentId = story['id']?.toString();
+    if (contentId == null) return;
+
+    // Pause story so it doesn't auto-advance while they comment
+    if (_controller.isAnimating) {
+      _controller.stop();
+    }
+
+    final api = Provider.of<ApiService>(context, listen: false);
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      builder: (c) {
+        final TextEditingController commentCtrl = TextEditingController();
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.65,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Reactions & Comments',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: FutureBuilder<Map<String, dynamic>>(
+                        future: api.getContentById(contentId),
+                        builder: (context, snap) {
+                          if (snap.connectionState != ConnectionState.done) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+                          if (snap.hasError) {
+                            return Center(
+                              child: Text(
+                                'Failed to load comments: ${snap.error}',
+                              ),
+                            );
+                          }
+                          final data = snap.data ?? {};
+                          final comments = data['comments'] is List
+                              ? data['comments'] as List<dynamic>
+                              : <dynamic>[];
+
+                          if (comments.isEmpty) {
+                            return const Center(child: Text('No comments yet'));
+                          }
+
+                          return ListView.separated(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            itemBuilder: (context, i) {
+                              final cmt = comments[i] as Map<dynamic, dynamic>;
+                              final user = cmt['user'];
+                              final uname =
+                                  (user is Map &&
+                                      (user['username'] != null ||
+                                          user['name'] != null))
+                                  ? (user['username'] ?? user['name'])
+                                        .toString()
+                                  : 'Unknown';
+                              final text =
+                                  cmt['comment_text']?.toString() ?? '';
+                              return ListTile(
+                                title: Text(
+                                  uname,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: Text(text),
+                              );
+                            },
+                            separatorBuilder: (_, __) => const Divider(),
+                            itemCount: comments.length,
+                          );
+                        },
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8.0,
+                        vertical: 4.0,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: commentCtrl,
+                              decoration: const InputDecoration(
+                                hintText: 'Add a comment...',
+                                border: OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.send, color: Colors.blue),
+                            onPressed: () async {
+                              final text = commentCtrl.text.trim();
+                              if (text.isEmpty) return;
+
+                              try {
+                                await api.commentContent(contentId, text);
+                                commentCtrl.clear();
+                                setModalState(() {});
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Failed to post: $e'),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    ).then((_) {
+      // Resume playing if closed
+      _controller.forward();
+    });
   }
 
   int _readLikesCount(Map<String, dynamic> story) {
@@ -282,8 +449,10 @@ class _StoryViewerState extends State<StoryViewer>
     if (confirm != true || !mounted) return;
 
     final api = Provider.of<ApiService>(context, listen: false);
-    final notifications =
-        Provider.of<NotificationService>(context, listen: false);
+    final notifications = Provider.of<NotificationService>(
+      context,
+      listen: false,
+    );
 
     try {
       await api.deleteContent(id);
@@ -313,18 +482,23 @@ class _StoryViewerState extends State<StoryViewer>
       _loadCurrentStory();
     } catch (e) {
       notifications.showError(
-          NotificationService.formatMessage('Failed to delete story: $e'));
+        NotificationService.formatMessage('Failed to delete story: $e'),
+      );
     }
   }
 
   String _resolveStoryOwnerName(
-      Map<String, dynamic> data, Map<String, dynamic>? user) {
+    Map<String, dynamic> data,
+    Map<String, dynamic>? user,
+  ) {
     try {
       if (user != null) {
-        final firstName =
-            (user['first_name'] ?? user['firstName'] ?? '').toString().trim();
-        final lastName =
-            (user['last_name'] ?? user['lastName'] ?? '').toString().trim();
+        final firstName = (user['first_name'] ?? user['firstName'] ?? '')
+            .toString()
+            .trim();
+        final lastName = (user['last_name'] ?? user['lastName'] ?? '')
+            .toString()
+            .trim();
         final fullFromParts = '$firstName $lastName'.trim();
 
         final candidates = [
@@ -359,8 +533,9 @@ class _StoryViewerState extends State<StoryViewer>
   @override
   Widget build(BuildContext context) {
     final data = widget.groups[_groupIndex][_index];
-    final user =
-        data['user'] is Map ? data['user'] as Map<String, dynamic> : null;
+    final user = data['user'] is Map
+        ? data['user'] as Map<String, dynamic>
+        : null;
     final avatar = user != null
         ? (user['avatar'] ?? user['avatar_url'])?.toString()
         : null;
@@ -383,10 +558,13 @@ class _StoryViewerState extends State<StoryViewer>
                 // progress bars
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8.0, vertical: 6.0),
+                    horizontal: 8.0,
+                    vertical: 6.0,
+                  ),
                   child: Row(
-                    children:
-                        List.generate(widget.groups[_groupIndex].length, (i) {
+                    children: List.generate(widget.groups[_groupIndex].length, (
+                      i,
+                    ) {
                       return Expanded(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 2.0),
@@ -395,7 +573,8 @@ class _StoryViewerState extends State<StoryViewer>
                                   value: null,
                                   backgroundColor: Colors.white24,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
+                                    Colors.white,
+                                  ),
                                 )
                               : LinearProgressIndicator(
                                   value: i < _index
@@ -404,7 +583,8 @@ class _StoryViewerState extends State<StoryViewer>
                                   backgroundColor: Colors.white24,
                                   valueColor:
                                       const AlwaysStoppedAnimation<Color>(
-                                          Colors.white),
+                                        Colors.white,
+                                      ),
                                 ),
                         ),
                       );
@@ -419,8 +599,11 @@ class _StoryViewerState extends State<StoryViewer>
                       GestureDetector(
                         onTap: () {
                           if (uid != null) {
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (_) => ProfileScreen(userId: uid)));
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ProfileScreen(userId: uid),
+                              ),
+                            );
                           }
                         },
                         child: NetworkAvatar(url: avatar, radius: 20),
@@ -430,140 +613,168 @@ class _StoryViewerState extends State<StoryViewer>
                         child: GestureDetector(
                           onTap: () {
                             if (uid != null) {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (_) => ProfileScreen(userId: uid)));
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => ProfileScreen(userId: uid),
+                                ),
+                              );
                             }
                           },
-                          child: Text(name,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
+                          child: Text(
+                            name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                       if ((data['views_count'] ?? data['views']) != null)
                         Padding(
-                            padding: const EdgeInsets.only(right: 12.0),
-                            child: Text(
-                                '${(data['views_count'] ?? data['views']).toString()} views',
-                                style: const TextStyle(color: Colors.white70))),
+                          padding: const EdgeInsets.only(right: 12.0),
+                          child: Text(
+                            '${(data['views_count'] ?? data['views']).toString()} views',
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                        ),
                       if (isOwner)
                         IconButton(
                           onPressed: _deleteCurrentStory,
-                          icon: const Icon(Icons.delete_outline,
-                              color: Colors.white),
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.white,
+                          ),
                         ),
                       IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close, color: Colors.white)),
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close, color: Colors.white),
+                      ),
                     ],
                   ),
                 ),
                 // content + gesture area
                 Expanded(
-                  child: LayoutBuilder(builder: (context, constraints) {
-                    return GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTapDown: (d) => _onTapDown(d, constraints),
-                      onLongPressStart: (_) {
-                        _isPaused = true;
-                        _controller.stop();
-                      },
-                      onLongPressEnd: (_) {
-                        _isPaused = false;
-                        _controller.forward();
-                      },
-                      child: Center(
-                        child: SizedBox.expand(
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              // Media (image/video thumbnail) if available
-                              if (image != null)
-                                Positioned.fill(
-                                  child: Image.network(image.toString(),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTapDown: (d) => _onTapDown(d, constraints),
+                        onLongPressStart: (_) {
+                          _isPaused = true;
+                          _controller.stop();
+                        },
+                        onLongPressEnd: (_) {
+                          _isPaused = false;
+                          _controller.forward();
+                        },
+                        child: Center(
+                          child: SizedBox.expand(
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Media (image/video thumbnail) if available
+                                if (image != null)
+                                  Positioned.fill(
+                                    child: Image.network(
+                                      image.toString(),
                                       fit: BoxFit.contain,
                                       errorBuilder: (_, __, ___) =>
                                           const Center(
-                                              child: Icon(Icons.broken_image,
-                                                  color: Colors.white))),
-                                )
-                              else
-                                // Text-only story background
-                                Container(
-                                  color: Colors.black,
-                                ),
-
-                              // Caption overlay: for media show at bottom, for text-only show centered
-                              if ((data['caption'] ?? '')
-                                  .toString()
-                                  .trim()
-                                  .isNotEmpty)
-                                Positioned(
-                                  left: 16,
-                                  right: 16,
-                                  bottom: image != null ? 24 : null,
-                                  top: image == null ? 120 : null,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black54,
-                                      borderRadius: BorderRadius.circular(8),
+                                            child: Icon(
+                                              Icons.broken_image,
+                                              color: Colors.white,
+                                            ),
+                                          ),
                                     ),
-                                    child: Text(
-                                      data['caption']?.toString() ?? '',
-                                      textAlign: image != null
-                                          ? TextAlign.left
-                                          : TextAlign.center,
-                                      style: const TextStyle(
-                                          color: Colors.white, fontSize: 16),
-                                      maxLines: 6,
-                                      overflow: TextOverflow.ellipsis,
+                                  )
+                                else
+                                  // Text-only story background
+                                  Container(color: Colors.black),
+
+                                // Caption overlay: for media show at bottom, for text-only show centered
+                                if ((data['caption'] ?? '')
+                                    .toString()
+                                    .trim()
+                                    .isNotEmpty)
+                                  Positioned(
+                                    left: 16,
+                                    right: 16,
+                                    bottom: image != null ? 24 : null,
+                                    top: image == null ? 120 : null,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 10,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black54,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        data['caption']?.toString() ?? '',
+                                        textAlign: image != null
+                                            ? TextAlign.left
+                                            : TextAlign.center,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                        ),
+                                        maxLines: 6,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ),
-                                ),
 
-                              // Fallback icon when no media and no caption
-                              if (image == null &&
-                                  (data['caption'] == null ||
-                                      data['caption']
-                                          .toString()
-                                          .trim()
-                                          .isEmpty))
-                                const Icon(Icons.image,
-                                    size: 80, color: Colors.white24),
-                            ],
+                                // Fallback icon when no media and no caption
+                                if (image == null &&
+                                    (data['caption'] == null ||
+                                        data['caption']
+                                            .toString()
+                                            .trim()
+                                            .isEmpty))
+                                  const Icon(
+                                    Icons.image,
+                                    size: 80,
+                                    color: Colors.white24,
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    },
+                  ),
                 ),
                 // footer actions
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12.0,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
-                          onPressed: _toggleLike,
-                          icon: Icon(
-                              _isLiked ? Icons.favorite : Icons.favorite_border,
-                              color: Colors.red)),
+                        onPressed: _toggleLike,
+                        icon: Icon(
+                          _isLiked ? Icons.favorite : Icons.favorite_border,
+                          color: Colors.red,
+                        ),
+                      ),
                       const SizedBox(width: 8),
                       Text(
-                          data['likes_count']?.toString() ??
-                              data['likes']?.toString() ??
-                              '0',
-                          style: const TextStyle(color: Colors.white)),
+                        data['likes_count']?.toString() ??
+                            data['likes']?.toString() ??
+                            '0',
+                        style: const TextStyle(color: Colors.white),
+                      ),
                       const Spacer(),
                       TextButton(
-                          onPressed: () => ScaffoldMessenger.of(context)
-                              .showSnackBar(const SnackBar(
-                                  content: Text(
-                                      'Viewers/reactions are not implemented yet'))),
-                          child: const Text('More',
-                              style: TextStyle(color: Colors.white))),
+                        onPressed: _showCommentsBottomSheet,
+                        child: const Text(
+                          'More',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -572,9 +783,7 @@ class _StoryViewerState extends State<StoryViewer>
             // Loading overlay
             if (_isLoading)
               const Center(
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                ),
+                child: CircularProgressIndicator(color: Colors.white),
               ),
           ],
         ),

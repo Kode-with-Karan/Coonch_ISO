@@ -56,17 +56,21 @@ class CourseDetailScreen extends StatefulWidget {
   const CourseDetailScreen({
     Key? key,
     this.courseId,
+    this.initialSeriesId,
     this.courseTitle,
     this.duration,
     this.price,
     this.color,
+    this.autoLoadOnOpen = false,
   }) : super(key: key);
 
   final String? courseId;
+  final String? initialSeriesId;
   final String? courseTitle;
   final String? duration;
   final String? price;
   final Color? color;
+  final bool autoLoadOnOpen;
 
   @override
   State<CourseDetailScreen> createState() => _CourseDetailScreenState();
@@ -86,6 +90,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   bool _isVideoInitialized = false;
   bool _isVideoInitializing = false;
   bool _hasAwardedPoints = false;
+  String? _resolvedCourseId;
 
   Future<T?> _pushPageDeferred<T>(
     Widget page, {
@@ -109,9 +114,18 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _resolvedCourseId = widget.courseId;
     debugPrint(
       '[course_detail_screen.dart][COURSE_DETAIL] Opened: courseId=${widget.courseId} title=${widget.courseTitle}',
     );
+    if (widget.autoLoadOnOpen) {
+      if (widget.courseId != null && widget.courseId!.isNotEmpty) {
+        _loadCourseDetails(widget.courseId);
+      } else if (widget.initialSeriesId != null &&
+          widget.initialSeriesId!.isNotEmpty) {
+        _loadFirstSeriesItem(widget.initialSeriesId!);
+      }
+    }
   }
 
   void _openContentItem({
@@ -128,15 +142,26 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         duration: duration,
         price: price,
         color: AppTheme.primary,
+        autoLoadOnOpen: true,
       ),
       replace: true,
     );
   }
 
-  Future<void> _loadCourseDetails() async {
+  Future<void> _loadCourseDetails([String? courseId]) async {
     if (!mounted) return;
+    final effectiveCourseId =
+        (courseId ?? _resolvedCourseId ?? widget.courseId ?? '').trim();
+    if (effectiveCourseId.isEmpty) {
+      setState(() {
+        _hasTriedLoadingDetails = true;
+        _loading = false;
+      });
+      return;
+    }
+    _resolvedCourseId = effectiveCourseId;
     debugPrint(
-      '[course_detail_screen.dart][COURSE_DETAIL] Loading details for courseId=${widget.courseId}',
+      '[course_detail_screen.dart][COURSE_DETAIL] Loading details for courseId=$effectiveCourseId',
     );
     setState(() {
       _loading = true;
@@ -144,7 +169,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     });
     try {
       final api = Provider.of<ApiService>(context, listen: false);
-      final details = await api.getContentById(widget.courseId!);
+      final details = await api.getContentById(effectiveCourseId);
       if (!mounted) return;
 
       final contentData = details['data'] ?? details;
@@ -183,7 +208,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
 
       if (canAccessContent(contentData)) {
         try {
-          final viewRes = await api.viewContent(widget.courseId!);
+          final viewRes = await api.viewContent(effectiveCourseId);
           if (viewRes['success'] == 1) {
             final awarded = viewRes['data']?['reward_points_awarded'] as int?;
             if (awarded != null && awarded > 0 && mounted) {
@@ -217,18 +242,57 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     }
   }
 
+  Future<void> _loadFirstSeriesItem(String seriesId) async {
+    if (!mounted) return;
+    debugPrint(
+      '[course_detail_screen.dart][COURSE_DETAIL] Resolving first item from seriesId=$seriesId',
+    );
+    setState(() {
+      _loading = true;
+      _hasTriedLoadingDetails = true;
+    });
+    try {
+      final api = Provider.of<ApiService>(context, listen: false);
+      final seriesData = await api.getSeriesById(seriesId);
+      if (!mounted) return;
+      final items = seriesData['items'] as List<dynamic>? ?? [];
+      if (items.isEmpty) {
+        setState(() => _loading = false);
+        return;
+      }
+      final firstItemId = items.first['id']?.toString() ?? '';
+      if (firstItemId.isEmpty) {
+        setState(() => _loading = false);
+        return;
+      }
+      await _loadCourseDetails(firstItemId);
+    } catch (e) {
+      debugPrint(
+        '[course_detail_screen.dart][COURSE_DETAIL] Error resolving series first item: $e',
+      );
+      if (!mounted) return;
+      setState(() => _loading = false);
+    }
+  }
+
   Future<bool> _ensureCourseDetailsLoaded() async {
     if (_courseDetails != null) return true;
     if (_loading) return false;
 
-    final courseId = widget.courseId;
-    if (courseId == null || courseId.isEmpty) return false;
+    if ((_resolvedCourseId ?? widget.courseId ?? '').trim().isNotEmpty) {
+      debugPrint(
+        '[course_detail_screen.dart][COURSE_DETAIL] Triggered lazy load from Play button',
+      );
+      await _loadCourseDetails();
+      return _courseDetails != null;
+    }
 
-    debugPrint(
-      '[course_detail_screen.dart][COURSE_DETAIL] Triggered lazy load from Play button',
-    );
-    await _loadCourseDetails();
-    return _courseDetails != null;
+    if ((widget.initialSeriesId ?? '').trim().isNotEmpty) {
+      await _loadFirstSeriesItem(widget.initialSeriesId!.trim());
+      return _courseDetails != null;
+    }
+
+    return false;
   }
 
   Future<void> _loadSeriesItems(String seriesId) async {
@@ -299,7 +363,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
     await _pushPageDeferred<void>(
       _FullScreenVideoPage(
         controller: _videoController!,
-        contentId: widget.courseId ?? '',
+        contentId: _resolvedCourseId ?? widget.courseId ?? '',
         onComplete: () => _awardViewPoints(),
       ),
       fullscreenDialog: true,
@@ -307,7 +371,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
   }
 
   Future<void> _awardViewPoints() async {
-    if (_hasAwardedPoints || widget.courseId == null) return;
+    final courseId = (_resolvedCourseId ?? widget.courseId ?? '').trim();
+    if (_hasAwardedPoints || courseId.isEmpty) return;
     if (isLockedContent(_courseDetails)) {
       _openSubscriptionPlans();
       return;
@@ -317,7 +382,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
 
     try {
       final api = Provider.of<ApiService>(context, listen: false);
-      final viewRes = await api.viewContent(widget.courseId!);
+      final viewRes = await api.viewContent(courseId);
       if (viewRes['success'] == 1 && mounted) {
         final awarded = viewRes['data']?['reward_points_awarded'] as int?;
         if (awarded != null && awarded > 0) {
@@ -360,7 +425,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen>
         _courseDetails?['title'] ??
         _courseDetails?['caption'] ??
         'Check out this content';
-    final contentId = widget.courseId ?? '';
+    final contentId = _resolvedCourseId ?? widget.courseId ?? '';
     final shareText =
         '$title\n\nWatch on Coonch: https://coonch.app/content/$contentId';
 

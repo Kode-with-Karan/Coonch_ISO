@@ -6,7 +6,6 @@ import '../../widgets/app_navbar.dart';
 import '../../widgets/subscription_dialog.dart';
 import '../../theme.dart';
 import 'course_detail_screen.dart';
-import 'series_detail_screen.dart';
 import 'category_results_screen.dart';
 import '../teacher_profile_screen.dart';
 import 'all_categories.dart';
@@ -585,20 +584,6 @@ class _EducationScreenState extends State<EducationScreen> {
     );
   }
 
-  void _pushSeriesDetail(SeriesDetailScreen page) {
-    if (!mounted) return;
-    debugPrint(
-      '[education_screen.dart][EDU_NAV] Opening SeriesDetailScreen instantly',
-    );
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => page,
-        transitionDuration: Duration.zero,
-        reverseTransitionDuration: Duration.zero,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final userName = _getUserName();
@@ -1135,11 +1120,35 @@ class _EducationScreenState extends State<EducationScreen> {
           '[education_screen.dart][EDU_TAP] Series tapped: id=$seriesId title=$title',
         );
 
-        _pushSeriesDetail(
-          SeriesDetailScreen(
-            seriesId: seriesId,
-            initialTitle: title,
-            accentColor: AppTheme.primary,
+        final fastContentId =
+            (series['first_content_id'] ??
+                    series['first_item_id'] ??
+                    series['content_id'])
+                ?.toString();
+
+        if (fastContentId != null && fastContentId.isNotEmpty) {
+          _pushContentDetail(
+            CourseDetailScreen(
+              courseId: fastContentId,
+              courseTitle: title,
+              duration: '',
+              price: 'Free',
+              color: AppTheme.primary,
+              autoLoadOnOpen: true,
+            ),
+          );
+          return;
+        }
+
+        // No prefetch on tap: open instantly, then resolve first item on destination.
+        _pushContentDetail(
+          CourseDetailScreen(
+            initialSeriesId: seriesId,
+            courseTitle: title,
+            duration: '',
+            price: 'Free',
+            color: AppTheme.primary,
+            autoLoadOnOpen: true,
           ),
         );
       },
@@ -1323,6 +1332,7 @@ class _EducationScreenState extends State<EducationScreen> {
             duration: duration,
             price: price,
             color: color,
+            autoLoadOnOpen: true,
           ),
         );
       },
@@ -1613,6 +1623,7 @@ class _EducationScreenState extends State<EducationScreen> {
             duration: duration,
             price: price,
             color: color,
+            autoLoadOnOpen: true,
           ),
         );
       },

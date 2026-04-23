@@ -44,10 +44,7 @@ class ApiService {
 
   Future<void> markActiveNow() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(
-      _kLastActiveKey,
-      DateTime.now().millisecondsSinceEpoch,
-    );
+    await prefs.setInt(_kLastActiveKey, DateTime.now().millisecondsSinceEpoch);
   }
 
   Future<DateTime?> lastActiveAt() async {
@@ -97,8 +94,10 @@ class ApiService {
     return await postJson('api/v1/user/unblock/$userId/', {}, omitAuth: false);
   }
 
-  Map<String, String> _defaultHeaders(
-      {bool json = true, bool omitAuth = false}) {
+  Map<String, String> _defaultHeaders({
+    bool json = true,
+    bool omitAuth = false,
+  }) {
     final headers = <String, String>{};
     if (json) {
       // Explicit UTF-8 avoids mojibake for emoji and other Unicode text.
@@ -111,8 +110,11 @@ class ApiService {
     return headers;
   }
 
-  Future<Map<String, dynamic>> postJson(String path, Map<String, dynamic> body,
-      {bool omitAuth = false}) async {
+  Future<Map<String, dynamic>> postJson(
+    String path,
+    Map<String, dynamic> body, {
+    bool omitAuth = false,
+  }) async {
     final uri = _resolveUri(path);
     final headers = _defaultHeaders(omitAuth: omitAuth);
     // Debug: log POST request details for troubleshooting 401s
@@ -149,13 +151,15 @@ class ApiService {
   /// expected by the backend (e.g. "file"), and [file] is the file to upload.
   /// [onProgress] is a callback that receives the progress (0.0 to 1.0)
   Future<Map<String, dynamic>> postMultipart(
-      String path, Map<String, String> fields,
-      {String? fileField,
-      File? file,
-      String? filename,
-      File? thumbnail,
-      String thumbnailField = 'thumbnail',
-      Function(double)? onProgress}) async {
+    String path,
+    Map<String, String> fields, {
+    String? fileField,
+    File? file,
+    String? filename,
+    File? thumbnail,
+    String thumbnailField = 'thumbnail',
+    Function(double)? onProgress,
+  }) async {
     final uri = _resolveUri(path);
     final request = http.MultipartRequest('POST', uri);
     request.headers.addAll(_defaultHeaders(json: false));
@@ -166,16 +170,18 @@ class ApiService {
     int sentBytes = 0;
 
     Stream<List<int>> track(Stream<List<int>> stream) {
-      return stream.transform(StreamTransformer.fromHandlers(
-        handleData: (data, sink) {
-          sentBytes += data.length;
-          if (onProgress != null && totalBytes > 0) {
-            final progress = sentBytes / totalBytes;
-            onProgress(progress.clamp(0.0, 1.0));
-          }
-          sink.add(data);
-        },
-      ));
+      return stream.transform(
+        StreamTransformer.fromHandlers(
+          handleData: (data, sink) {
+            sentBytes += data.length;
+            if (onProgress != null && totalBytes > 0) {
+              final progress = sentBytes / totalBytes;
+              onProgress(progress.clamp(0.0, 1.0));
+            }
+            sink.add(data);
+          },
+        ),
+      );
     }
 
     // Primary file (e.g., video or image)
@@ -210,8 +216,9 @@ class ApiService {
 
     try {
       // Send request and get response
-      final streamed =
-          await request.send().timeout(const Duration(minutes: 10));
+      final streamed = await request.send().timeout(
+        const Duration(minutes: 10),
+      );
       final res = await http.Response.fromStream(streamed);
 
       if (onProgress != null) {
@@ -227,12 +234,14 @@ class ApiService {
   /// Generic multipart request that allows custom HTTP method (e.g., PATCH).
   /// Useful for endpoints that accept multipart PATCH (profile update with avatar).
   Future<Map<String, dynamic>> patchMultipart(
-      String path, Map<String, String> fields,
-      {String? fileField,
-      File? file,
-      String? filename,
-      File? thumbnail,
-      String thumbnailField = 'thumbnail'}) async {
+    String path,
+    Map<String, String> fields, {
+    String? fileField,
+    File? file,
+    String? filename,
+    File? thumbnail,
+    String thumbnailField = 'thumbnail',
+  }) async {
     final uri = _resolveUri(path);
     // http.MultipartRequest accepts any method string
     final request = http.MultipartRequest('PATCH', uri);
@@ -243,16 +252,24 @@ class ApiService {
     if (file != null && fileField != null) {
       final stream = http.ByteStream(file.openRead());
       final length = await file.length();
-      final multipart = http.MultipartFile(fileField, stream, length,
-          filename: filename ?? file.path.split('/').last);
+      final multipart = http.MultipartFile(
+        fileField,
+        stream,
+        length,
+        filename: filename ?? file.path.split('/').last,
+      );
       request.files.add(multipart);
     }
 
     if (thumbnail != null) {
       final stream = http.ByteStream(thumbnail.openRead());
       final length = await thumbnail.length();
-      final multipart = http.MultipartFile(thumbnailField, stream, length,
-          filename: thumbnail.path.split('/').last);
+      final multipart = http.MultipartFile(
+        thumbnailField,
+        stream,
+        length,
+        filename: thumbnail.path.split('/').last,
+      );
       request.files.add(multipart);
     }
 
@@ -328,23 +345,23 @@ class ApiService {
 
   /// Request an OTP for registration to verify the user's email.
   Future<Map<String, dynamic>> requestRegistrationOtp(String email) async {
-    return await postJson('api/v1/auth/register/send-otp/', {'email': email},
-        omitAuth: true);
+    return await postJson('api/v1/auth/register/send-otp/', {
+      'email': email,
+    }, omitAuth: true);
   }
 
   /// Login using either the /user/login/ or /auth/login/ endpoint.
   /// On success persists token automatically.
-  Future<Map<String, dynamic>> login(
-      {required String username, required String password}) async {
+  Future<Map<String, dynamic>> login({
+    required String username,
+    required String password,
+  }) async {
     Future<Map<String, dynamic>> send(String path) async {
-      return await postJson(
-          path,
-          {
-            'username': username,
-            'email': username,
-            'password': password,
-          },
-          omitAuth: true);
+      return await postJson(path, {
+        'username': username,
+        'email': username,
+        'password': password,
+      }, omitAuth: true);
     }
 
     Future<void> persistTokenIfPresent(Map<String, dynamic> res) async {
@@ -397,20 +414,28 @@ class ApiService {
 
   /// Update current user's profile (PATCH)
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data) async {
-    final res = await http.patch(_resolveUri('api/v1/user/update-profile/'),
-        headers: _defaultHeaders(), body: jsonEncode(data));
+    final res = await http.patch(
+      _resolveUri('api/v1/user/update-profile/'),
+      headers: _defaultHeaders(),
+      body: jsonEncode(data),
+    );
     return _process(res);
   }
 
   /// Update current user's profile with support for uploading avatar image.
   /// If [avatar] is provided the request will be sent as multipart PATCH.
   Future<Map<String, dynamic>> updateProfileMultipart(
-      Map<String, String> fields,
-      {File? avatar,
-      String avatarField = 'avatar'}) async {
+    Map<String, String> fields, {
+    File? avatar,
+    String avatarField = 'avatar',
+  }) async {
     if (avatar != null) {
-      return await patchMultipart('api/v1/user/update-profile/', fields,
-          fileField: avatarField, file: avatar);
+      return await patchMultipart(
+        'api/v1/user/update-profile/',
+        fields,
+        fileField: avatarField,
+        file: avatar,
+      );
     }
     // Fallback to JSON PATCH
     return await updateProfile(fields.map((k, v) => MapEntry(k, v)));
@@ -418,13 +443,17 @@ class ApiService {
 
   /// Update password
   Future<Map<String, dynamic>> updatePassword(
-      String currentPassword, String newPassword) async {
-    final res = await http.patch(_resolveUri('api/v1/user/update-password/'),
-        headers: _defaultHeaders(),
-        body: jsonEncode({
-          'current_password': currentPassword,
-          'new_password': newPassword,
-        }));
+    String currentPassword,
+    String newPassword,
+  ) async {
+    final res = await http.patch(
+      _resolveUri('api/v1/user/update-password/'),
+      headers: _defaultHeaders(),
+      body: jsonEncode({
+        'current_password': currentPassword,
+        'new_password': newPassword,
+      }),
+    );
     return _process(res);
   }
 
@@ -434,12 +463,16 @@ class ApiService {
   }
 
   /// Confirm forgot-password using email + otp to set a new password.
-  Future<Map<String, dynamic>> confirmPasswordReset(
-      {required String email,
-      required String otp,
-      required String password}) async {
-    return await postJson('api/v1/user/forgot-password/confirm/',
-        {'email': email, 'otp': otp, 'password': password});
+  Future<Map<String, dynamic>> confirmPasswordReset({
+    required String email,
+    required String otp,
+    required String password,
+  }) async {
+    return await postJson('api/v1/user/forgot-password/confirm/', {
+      'email': email,
+      'otp': otp,
+      'password': password,
+    });
   }
 
   /// Request an OTP for account deletion.
@@ -455,8 +488,9 @@ class ApiService {
 
   /// Set user categories
   Future<Map<String, dynamic>> setCategories(List<int> categoryIds) async {
-    return await postJson(
-        'api/v1/user/categories/', {'categories': categoryIds});
+    return await postJson('api/v1/user/categories/', {
+      'categories': categoryIds,
+    });
   }
 
   /// Follow a user by id
@@ -493,7 +527,8 @@ class ApiService {
   /// the raw response map is returned and callers can extract fields.
   Future<List<dynamic>> getFollowersFor(String userId) async {
     final res = await getJson(
-        'api/v1/user/followers/?user_id=${Uri.encodeComponent(userId)}');
+      'api/v1/user/followers/?user_id=${Uri.encodeComponent(userId)}',
+    );
     if (res.containsKey('data') && res['data'] is List) {
       return res['data'] as List<dynamic>;
     }
@@ -506,7 +541,8 @@ class ApiService {
   /// Get followings for a specific user id (public).
   Future<List<dynamic>> getFollowingsFor(String userId) async {
     final res = await getJson(
-        'api/v1/user/followings/?user_id=${Uri.encodeComponent(userId)}');
+      'api/v1/user/followings/?user_id=${Uri.encodeComponent(userId)}',
+    );
     if (res.containsKey('data') && res['data'] is List) {
       return res['data'] as List<dynamic>;
     }
@@ -518,7 +554,8 @@ class ApiService {
   /// Search users
   Future<List<dynamic>> searchUsers(String searchText) async {
     final res = await getJson(
-        'api/v1/user/search/?search_text=${Uri.encodeComponent(searchText)}');
+      'api/v1/user/search/?search_text=${Uri.encodeComponent(searchText)}',
+    );
     if (res['data'] is List) return res['data'] as List<dynamic>;
     return [];
   }
@@ -554,8 +591,9 @@ class ApiService {
   }
 
   /// Mark notifications as read. If [ids] is null or empty, marks all for user.
-  Future<Map<String, dynamic>> markNotificationsRead(
-      {List<String>? ids}) async {
+  Future<Map<String, dynamic>> markNotificationsRead({
+    List<String>? ids,
+  }) async {
     final body = <String, dynamic>{};
     if (ids != null) body['ids'] = ids;
     return await postJson('api/v1/user/notifications/mark-read/', body);
@@ -610,20 +648,27 @@ class ApiService {
   /// If uploading a video/short, pass [thumbnail] to include the required
   /// thumbnail image in the multipart payload.
   /// [onProgress] is a callback that receives the upload progress (0.0 to 1.0)
-  Future<Map<String, dynamic>> createContent(Map<String, String> fields,
-      {File? file,
-      String? fileField,
-      File? thumbnail,
-      Function(double)? onProgress}) async {
+  Future<Map<String, dynamic>> createContent(
+    Map<String, String> fields, {
+    File? file,
+    String? fileField,
+    File? thumbnail,
+    Function(double)? onProgress,
+  }) async {
     if (file != null) {
-      return await postMultipart('api/v1/content/', fields,
-          fileField: fileField ?? 'file',
-          file: file,
-          thumbnail: thumbnail,
-          onProgress: onProgress);
+      return await postMultipart(
+        'api/v1/content/',
+        fields,
+        fileField: fileField ?? 'file',
+        file: file,
+        thumbnail: thumbnail,
+        onProgress: onProgress,
+      );
     }
     return await postJson(
-        'api/v1/content/', fields.map((k, v) => MapEntry(k, v)));
+      'api/v1/content/',
+      fields.map((k, v) => MapEntry(k, v)),
+    );
   }
 
   /// Get all draft contents created by current user.
@@ -636,10 +681,11 @@ class ApiService {
         res.containsKey('detail') ||
         res.containsKey('error')) {
       throw ApiException(
-          500,
-          res['detail']?.toString() ??
-              res['message']?.toString() ??
-              'Failed to load drafts');
+        500,
+        res['detail']?.toString() ??
+            res['message']?.toString() ??
+            'Failed to load drafts',
+      );
     }
     return [];
   }
@@ -672,9 +718,19 @@ class ApiService {
 
   /// Comment on content
   Future<Map<String, dynamic>> commentContent(
-      String contentId, String comment) async {
-    return await postJson(
-        'api/v1/content/$contentId/comment/', {'comment_text': comment});
+    String contentId,
+    String comment,
+  ) async {
+    final res = await postJson('api/v1/content/$contentId/comment/', {
+      'comment_text': comment,
+    });
+    if (res['success'] == 0 || res['success'] == false) {
+      throw ApiException(
+        res['error_code'] ?? 400,
+        res['message'] ?? 'Comment failed',
+      );
+    }
+    return res;
   }
 
   /// Report content for moderation review.
@@ -692,16 +748,22 @@ class ApiService {
 
   /// Delete a comment
   Future<Map<String, dynamic>> deleteComment(
-      String contentId, String commentId) async {
+    String contentId,
+    String commentId,
+  ) async {
     final res = await http.delete(
-        _resolveUri('api/v1/content/$contentId/comment/$commentId/'),
-        headers: _defaultHeaders());
+      _resolveUri('api/v1/content/$contentId/comment/$commentId/'),
+      headers: _defaultHeaders(),
+    );
     return _process(res);
   }
 
   /// Edit a comment's text.
   Future<Map<String, dynamic>> updateComment(
-      String contentId, String commentId, String comment) async {
+    String contentId,
+    String commentId,
+    String comment,
+  ) async {
     final res = await http.patch(
       _resolveUri('api/v1/content/$contentId/comment/$commentId/'),
       headers: _defaultHeaders(),
@@ -721,8 +783,10 @@ class ApiService {
     final path = StringBuffer('api/v1/content/');
     if (queryParams != null && queryParams.isNotEmpty) {
       final qs = queryParams.entries
-          .map((e) =>
-              '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+          .map(
+            (e) =>
+                '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
+          )
           .join('&');
       path.write('?$qs');
     }
@@ -776,8 +840,10 @@ class ApiService {
     final path = StringBuffer('api/v1/content/series/');
     if (queryParams != null && queryParams.isNotEmpty) {
       final qs = queryParams.entries
-          .map((e) =>
-              '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+          .map(
+            (e) =>
+                '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
+          )
           .join('&');
       path.write('?$qs');
     }
@@ -810,30 +876,49 @@ class ApiService {
   /// Delete a content item by id.
   /// Calls `DELETE /api/v1/content/<id>/` and returns the parsed response.
   Future<Map<String, dynamic>> deleteContent(String id) async {
-    final res = await http.delete(_resolveUri('api/v1/content/$id/'),
-        headers: _defaultHeaders());
+    final res = await http.delete(
+      _resolveUri('api/v1/content/$id/'),
+      headers: _defaultHeaders(),
+    );
     return _process(res);
   }
 
   /// Update a content item (PATCH). If [file] is provided the request will
   /// be sent as multipart PATCH, otherwise a JSON PATCH is sent.
   Future<Map<String, dynamic>> updateContent(
-      String id, Map<String, String> fields,
-      {File? file, String? fileField, File? thumbnail}) async {
+    String id,
+    Map<String, String> fields, {
+    File? file,
+    String? fileField,
+    File? thumbnail,
+  }) async {
     if (file != null) {
-      return await patchMultipart('api/v1/content/$id/', fields,
-          fileField: fileField ?? 'file', file: file, thumbnail: thumbnail);
+      return await patchMultipart(
+        'api/v1/content/$id/',
+        fields,
+        fileField: fileField ?? 'file',
+        file: file,
+        thumbnail: thumbnail,
+      );
     }
-    final res = await http.patch(_resolveUri('api/v1/content/$id/'),
-        headers: _defaultHeaders(), body: jsonEncode(fields));
+    final res = await http.patch(
+      _resolveUri('api/v1/content/$id/'),
+      headers: _defaultHeaders(),
+      body: jsonEncode(fields),
+    );
     return _process(res);
   }
 
   /// Update a series (PATCH). Use this for editing title/description/external_id.
   Future<Map<String, dynamic>> updateSeries(
-      String id, Map<String, String> fields) async {
-    final res = await http.patch(_resolveUri('api/v1/content/series/$id/'),
-        headers: _defaultHeaders(), body: jsonEncode(fields));
+    String id,
+    Map<String, String> fields,
+  ) async {
+    final res = await http.patch(
+      _resolveUri('api/v1/content/series/$id/'),
+      headers: _defaultHeaders(),
+      body: jsonEncode(fields),
+    );
     return _process(res);
   }
 
@@ -867,7 +952,8 @@ class ApiService {
 
   /// Create Stripe payment intent for a subscription plan.
   Future<Map<String, dynamic>> createSubscriptionPaymentIntent(
-      int planId) async {
+    int planId,
+  ) async {
     final res = await http.post(
       _resolveUri('api/v1/rewards/create-subscription-intent/'),
       headers: _defaultHeaders(),
@@ -877,8 +963,11 @@ class ApiService {
   }
 
   /// Confirm and activate a paid subscription plan.
-  Future<Map<String, dynamic>> subscribeToPlan(int planId,
-      {required String paymentIntentId, String? paymentMethodId}) async {
+  Future<Map<String, dynamic>> subscribeToPlan(
+    int planId, {
+    required String paymentIntentId,
+    String? paymentMethodId,
+  }) async {
     final res = await http.post(
       _resolveUri('api/v1/rewards/subscribe/'),
       headers: _defaultHeaders(),

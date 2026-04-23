@@ -70,8 +70,8 @@ class _ContentDetailScreenState extends State<ContentDetailScreen> {
 
       setState(() {
         _isLiked = _content!['is_liked_by_me'] == true;
-        _likes =
-            (_content!['likes_count'] ?? _content!['likes'] ?? '0').toString();
+        _likes = (_content!['likes_count'] ?? _content!['likes'] ?? '0')
+            .toString();
         _comments = (_content!['comments'] is List)
             ? _content!['comments'] as List<dynamic>
             : <dynamic>[];
@@ -79,8 +79,9 @@ class _ContentDetailScreenState extends State<ContentDetailScreen> {
     } catch (e) {
       debugPrint('Failed to load content detail: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to load content: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load content: $e')));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -99,7 +100,7 @@ class _ContentDetailScreenState extends State<ContentDetailScreen> {
 
     setState(() {
       _isLiked = !_isLiked;
-      final num = int.tryParse(_likes) ?? 0;
+      final num = int.tryParse(_likes.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
       _likes = (_isLiked ? num + 1 : (num > 0 ? num - 1 : 0)).toString();
     });
 
@@ -121,8 +122,9 @@ class _ContentDetailScreenState extends State<ContentDetailScreen> {
       });
       final msg = e is ApiException ? 'Like failed (${e.code})' : 'Like failed';
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(msg)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(msg)));
       }
     }
   }
@@ -152,11 +154,13 @@ class _ContentDetailScreenState extends State<ContentDetailScreen> {
         _content = fresh;
       });
     } catch (e) {
-      final msg =
-          e is ApiException ? 'Comment failed (${e.code})' : 'Comment failed';
+      final msg = e is ApiException
+          ? 'Comment failed (${e.code}): ${e.body}'
+          : 'Comment failed: ${e.toString()}';
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(msg)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(msg)));
       }
     }
   }
@@ -180,115 +184,117 @@ class _ContentDetailScreenState extends State<ContentDetailScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _content == null
-              ? const Center(child: Text('Content not found'))
-              : Container(
-                  color:
-                      isWebWideLayout ? const Color(0xFFF4F6F8) : Colors.white,
-                  child: SingleChildScrollView(
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                            maxWidth: isWebWideLayout ? 1200 : double.infinity),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isWebWideLayout ? 20 : 0,
-                            vertical: isWebWideLayout ? 20 : 0,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildAuthorHeader(
-                                  asWebsiteBlock: isWebWideLayout),
-                              if (lockedContent)
-                                _buildLockedContent()
-                              else if (isWebWideLayout)
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      flex: 7,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(16),
-                                          boxShadow: const [
-                                            BoxShadow(
-                                              color: Colors.black12,
-                                              blurRadius: 10,
-                                              offset: Offset(0, 3),
-                                            )
-                                          ],
+          ? const Center(child: Text('Content not found'))
+          : Container(
+              color: isWebWideLayout ? const Color(0xFFF4F6F8) : Colors.white,
+              child: SingleChildScrollView(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: isWebWideLayout ? 1200 : double.infinity,
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isWebWideLayout ? 20 : 0,
+                        vertical: isWebWideLayout ? 20 : 0,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildAuthorHeader(asWebsiteBlock: isWebWideLayout),
+                          if (lockedContent)
+                            _buildLockedContent()
+                          else if (isWebWideLayout)
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  flex: 7,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Colors.black12,
+                                          blurRadius: 10,
+                                          offset: Offset(0, 3),
                                         ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            _buildMedia(type, fileUrl,
-                                                isWideLayout: true),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.all(16.0),
-                                              child: _buildCaptionAndActions(),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 20),
-                                    Expanded(
-                                      flex: 5,
-                                      child: _buildCommentsPanel(),
-                                    ),
-                                  ],
-                                )
-                              else ...[
-                                _buildMedia(type, fileUrl),
-                                Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      _buildCaptionAndActions(),
-                                      const SizedBox(height: 12),
-                                      const Divider(),
-                                      const SizedBox(height: 8),
-                                      const Text('Comments',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                      const SizedBox(height: 8),
-                                      ..._commentTiles(),
-                                      const SizedBox(height: 12),
-                                      Padding(
-                                        padding: EdgeInsets.only(
-                                            bottom: MediaQuery.of(context)
-                                                    .viewInsets
-                                                    .bottom +
-                                                8),
-                                        child: SafeArea(
-                                          child: _buildCommentComposer(),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        _buildMedia(
+                                          type,
+                                          fileUrl,
+                                          isWideLayout: true,
                                         ),
-                                      ),
-                                    ],
+                                        Padding(
+                                          padding: const EdgeInsets.all(16.0),
+                                          child: _buildCaptionAndActions(),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ]
-                            ],
-                          ),
-                        ),
+                                const SizedBox(width: 20),
+                                Expanded(flex: 5, child: _buildCommentsPanel()),
+                              ],
+                            )
+                          else ...[
+                            _buildMedia(type, fileUrl),
+                            Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildCaptionAndActions(),
+                                  const SizedBox(height: 12),
+                                  const Divider(),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Comments',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ..._commentTiles(),
+                                  const SizedBox(height: 12),
+                                  Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom:
+                                          MediaQuery.of(
+                                            context,
+                                          ).viewInsets.bottom +
+                                          8,
+                                    ),
+                                    child: SafeArea(
+                                      child: _buildCommentComposer(),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ),
                 ),
+              ),
+            ),
     );
   }
 
   Widget _buildAuthorHeader({bool asWebsiteBlock = false}) {
     final u = _content!['user'];
     final name = (u is Map) ? (u['name'] ?? u['username']) : (u?.toString());
-    final avatar =
-        (u is Map) ? (u['avatar'] ?? u['avatar_url'])?.toString() : null;
+    final avatar = (u is Map)
+        ? (u['avatar'] ?? u['avatar_url'])?.toString()
+        : null;
 
     final row = Row(
       children: [
@@ -297,17 +303,16 @@ class _ContentDetailScreenState extends State<ContentDetailScreen> {
         Expanded(
           child: name == null
               ? const SizedBox.shrink()
-              : Text(name.toString(),
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              : Text(
+                  name.toString(),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
         ),
       ],
     );
 
     if (!asWebsiteBlock) {
-      return Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: row,
-      );
+      return Padding(padding: const EdgeInsets.all(12.0), child: row);
     }
 
     return Container(
@@ -317,11 +322,7 @@ class _ContentDetailScreenState extends State<ContentDetailScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          )
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
         ],
       ),
       child: row,
@@ -332,21 +333,28 @@ class _ContentDetailScreenState extends State<ContentDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(_content!['caption']?.toString() ?? '',
-            style: const TextStyle(fontSize: 16)),
+        Text(
+          _content!['caption']?.toString() ?? '',
+          style: const TextStyle(fontSize: 16),
+        ),
         const SizedBox(height: 12),
         Row(
           children: [
             IconButton(
-                onPressed: _toggleLike,
-                icon: Icon(_isLiked ? Icons.favorite : Icons.favorite_border,
-                    color: Colors.red)),
+              onPressed: _toggleLike,
+              icon: Icon(
+                _isLiked ? Icons.favorite : Icons.favorite_border,
+                color: Colors.red,
+              ),
+            ),
             Text(_likes, style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(width: 18),
             const Icon(Icons.chat_bubble_outline),
             const SizedBox(width: 6),
-            Text((_comments.length).toString(),
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              (_comments.length).toString(),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ],
@@ -364,14 +372,16 @@ class _ContentDetailScreenState extends State<ContentDetailScreen> {
             color: Colors.black12,
             blurRadius: 10,
             offset: Offset(0, 3),
-          )
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Comments',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const Text(
+            'Comments',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
           const SizedBox(height: 8),
           if (_comments.isEmpty)
             const Padding(
@@ -401,8 +411,9 @@ class _ContentDetailScreenState extends State<ContentDetailScreen> {
     final cm = c as Map<dynamic, dynamic>;
     final user = cm['user'];
     final text = cm['comment_text']?.toString() ?? '';
-    final name =
-        (user is Map) ? (user['name'] ?? user['username']) : (user?.toString());
+    final name = (user is Map)
+        ? (user['name'] ?? user['username'])
+        : (user?.toString());
     final avatar = (user is Map)
         ? (user['avatar'] ?? user['avatar_url'])?.toString()
         : null;
@@ -417,23 +428,32 @@ class _ContentDetailScreenState extends State<ContentDetailScreen> {
           ? GestureDetector(
               onTap: () {
                 if (commentUserId != null) {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => ProfileScreen(userId: commentUserId)));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ProfileScreen(userId: commentUserId),
+                    ),
+                  );
                 }
               },
-              child: NetworkAvatar(url: avatar, radius: 18))
+              child: NetworkAvatar(url: avatar, radius: 18),
+            )
           : const CircleAvatar(child: Icon(Icons.person)),
       title: GestureDetector(
         onTap: () {
           if (commentUserId != null) {
-            Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => ProfileScreen(userId: commentUserId)));
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ProfileScreen(userId: commentUserId),
+              ),
+            );
           }
         },
         child: name == null
             ? const SizedBox.shrink()
-            : Text(name.toString(),
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            : Text(
+                name.toString(),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
       ),
       subtitle: Text(text),
     );
@@ -448,22 +468,23 @@ class _ContentDetailScreenState extends State<ContentDetailScreen> {
             keyboardType: TextInputType.multiline,
             textInputAction: TextInputAction.newline,
             decoration: const InputDecoration(
-                hintText: 'Write a comment...',
-                border: OutlineInputBorder(),
-                isDense: true),
+              hintText: 'Write a comment...',
+              border: OutlineInputBorder(),
+              isDense: true,
+            ),
           ),
         ),
         const SizedBox(width: 8),
-        ElevatedButton(onPressed: _postComment, child: const Text('Post'))
+        ElevatedButton(onPressed: _postComment, child: const Text('Post')),
       ],
     );
   }
 
   Future<void> _openSubscriptionPlans() async {
     if (!mounted) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
-    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const SubscriptionScreen()));
   }
 
   Widget _buildLockedContent() {
@@ -515,8 +536,11 @@ class _ContentDetailScreenState extends State<ContentDetailScreen> {
     );
   }
 
-  Widget _buildMedia(String type, String? fileUrl,
-      {bool isWideLayout = false}) {
+  Widget _buildMedia(
+    String type,
+    String? fileUrl, {
+    bool isWideLayout = false,
+  }) {
     final mediaHeight = isWideLayout ? 440.0 : 240.0;
 
     // Audio content
@@ -524,8 +548,9 @@ class _ContentDetailScreenState extends State<ContentDetailScreen> {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12.0),
         child: AudioPlayerWidget(
-            url: (_content?['file_url'] ?? _content?['audio_url'])?.toString(),
-            height: 84),
+          url: (_content?['file_url'] ?? _content?['audio_url'])?.toString(),
+          height: 84,
+        ),
       );
     }
 

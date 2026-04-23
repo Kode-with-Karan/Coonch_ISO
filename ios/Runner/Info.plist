@@ -49,6 +49,14 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Coonch needs camera access to record videos for your posts.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Coonch needs microphone access to record audio for your posts.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Coonch needs photo library access to select videos and images for your posts.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Coonch needs permission to save captured media to your photo library.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

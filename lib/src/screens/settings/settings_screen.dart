@@ -7,6 +7,7 @@ import 'monetization_screen.dart';
 import 'share_profile_screen.dart';
 import 'help_support_screen.dart';
 import 'wishlist_screen.dart';
+import 'blocked_users_screen.dart';
 import '../login/login_screen.dart';
 import '../../widgets/widgets.dart';
 import 'package:provider/provider.dart';
@@ -203,10 +204,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       onTap: () => Navigator.of(context).push(MaterialPageRoute(
                           builder: (_) => const SubscriptionScreen()))),
                   const Divider(height: 1),
-                  _listRow(Icons.pie_chart_outline, 'Monetization',
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => const MonetizationScreen()))),
-                  const Divider(height: 1),
+                  // _listRow(Icons.pie_chart_outline, 'Monetization',
+                  //     onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  //         builder: (_) => const MonetizationScreen()))),
+                  // const Divider(height: 1),
                   _listRow(Icons.insert_chart_outlined, 'Share Profile',
                       onTap: () => Navigator.of(context).push(MaterialPageRoute(
                           builder: (_) => const ShareProfileScreen()))),
@@ -304,12 +305,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () async {
-                    // Perform logout: clear token and user state, then navigate to login
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Log out'),
+                        content: const Text('Are you sure you want to log out?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(true),
+                            child: const Text('Log out'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirmed != true) return;
+
                     final navigator = Navigator.of(context);
                     final auth =
                         Provider.of<AuthProvider>(context, listen: false);
 
-                    // show progress dialog
                     showDialog(
                         context: context,
                         barrierDismissible: false,
@@ -322,16 +341,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       // ignore errors but ensure dialog is dismissed
                     }
 
-                    // remove progress
                     navigator.pop();
-
-                    // Navigate to LoginScreen and clear history so user can't go back
                     navigator.pushAndRemoveUntil(
                         MaterialPageRoute(builder: (_) => const LoginScreen()),
                         (route) => false);
                   },
                   icon: const Icon(Icons.logout, color: Colors.black),
                   label: const Text('Log out',
+                      style: TextStyle(color: Colors.black, fontSize: 16)),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    side: BorderSide(color: Colors.grey.shade300),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 18.0, vertical: 4),
+              child: SizedBox(
+                height: 56,
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const BlockedUsersScreen(),
+                    ),
+                  ),
+                  icon: const Icon(Icons.block, color: Colors.black),
+                  label: const Text('Blocked Users',
                       style: TextStyle(color: Colors.black, fontSize: 16)),
                   style: OutlinedButton.styleFrom(
                     backgroundColor: Colors.white,

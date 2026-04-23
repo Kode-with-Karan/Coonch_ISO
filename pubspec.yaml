@@ -25,6 +25,7 @@ dependencies:
   record: ^6.1.2
   app_links: ^2.0.2
   qr_flutter: ^4.1.0
+  share_plus: ^12.0.2
   flutter_stripe: ^9.6.0
   meta: ^1.11.0
   msix: ^3.16.13

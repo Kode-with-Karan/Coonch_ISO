@@ -102,6 +102,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       notifications.showError('Please enter a valid registered email address');
       return;
     }
+    if (!RegExp(r'^\d{6}$').hasMatch(otp)) {
+      notifications.showWarning('Reset code must be exactly 6 digits');
+      return;
+    }
     if (password != confirm) {
       notifications.showError('Passwords do not match');
       return;
@@ -240,9 +244,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     const SizedBox(height: 20),
                     TextField(
                       controller: _otpController,
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
                       decoration: InputDecoration(
                         labelText: 'Reset code',
                         hintText: '6-digit code',
+                        counterText: '',
                         labelStyle: const TextStyle(
                           color: Colors.black87,
                           fontWeight: FontWeight.w600,

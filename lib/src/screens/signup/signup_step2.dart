@@ -269,7 +269,7 @@ class _SignUpStep2State extends State<SignUpStep2> {
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.fromLTRB(
             20,
-            10,
+            0,
             20,
             bottomInset > 0 ? bottomInset + 16 : 24,
           ),

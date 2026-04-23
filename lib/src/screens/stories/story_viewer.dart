@@ -240,10 +240,11 @@ class _StoryViewerState extends State<StoryViewer>
           builder: (context, setModalState) {
             return Padding(
               padding: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top > 0 ? MediaQuery.of(context).padding.top - 8 : 0,
                 bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
               child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.65,
+                height: (MediaQuery.of(context).size.height * 0.65) - MediaQuery.of(context).padding.top,
                 child: Column(
                   children: [
                     Padding(

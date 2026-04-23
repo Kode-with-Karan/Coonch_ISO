@@ -94,6 +94,18 @@ class ApiService {
     return await postJson('api/v1/user/unblock/$userId/', {}, omitAuth: false);
   }
 
+  Future<List<dynamic>> getBlockedUsers() async {
+    final res = await getJson('api/v1/user/blocked/');
+    if (res is List) return res as List<dynamic>;
+    if (res.containsKey('data') && res['data'] is List) {
+      return res['data'] as List<dynamic>;
+    }
+    if (res.containsKey('results') && res['results'] is List) {
+      return res['results'] as List<dynamic>;
+    }
+    return [];
+  }
+
   Map<String, String> _defaultHeaders({
     bool json = true,
     bool omitAuth = false,
@@ -597,6 +609,20 @@ class ApiService {
     final body = <String, dynamic>{};
     if (ids != null) body['ids'] = ids;
     return await postJson('api/v1/user/notifications/mark-read/', body);
+  }
+
+  /// Mark notifications as unread.
+  Future<Map<String, dynamic>> markNotificationsUnread({
+    List<String>? ids,
+  }) async {
+    final body = <String, dynamic>{};
+    if (ids != null) body['ids'] = ids;
+    return await postJson('api/v1/user/notifications/mark-unread/', body);
+  }
+
+  /// Clear all notifications.
+  Future<Map<String, dynamic>> clearAllNotifications() async {
+    return await postJson('api/v1/user/notifications/clear/', {});
   }
 
   /// Get unread notifications count (includes pending follow requests).

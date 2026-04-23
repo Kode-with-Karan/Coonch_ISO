@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../widgets/widgets.dart';
 import '../../theme.dart';
 import '../../providers/auth_provider.dart';
@@ -12,19 +13,22 @@ class ShareProfileScreen extends StatelessWidget {
   const ShareProfileScreen({super.key});
 
   String _buildProfileLink(Map<String, dynamic>? user) {
+    final username = user?['username']?.toString();
+    if (username != null && username.isNotEmpty) {
+      return 'coonch://profile/$username';
+    }
     final id = user?['id'] ?? user?['user_id'] ?? user?['pk'];
-    final slug = (id ?? user?['username'] ?? user?['name'] ?? '').toString();
-    // Use app-deep-link first; adjust slug to string id
-    return 'coonch://profile/$slug';
+    return 'coonch://profile/${id ?? ''}';
   }
 
   String _buildWebProfileLink(Map<String, dynamic>? user) {
+    final username = user?['username']?.toString();
+    const base = Config.baseUrl;
+    if (username != null && username.isNotEmpty) {
+      return '$base/u/$username';
+    }
     final id = user?['id'] ?? user?['user_id'] ?? user?['pk'];
-    final slug = (id ?? user?['username'] ?? user?['name'] ?? '').toString();
-    final base = Config.baseApiUrl.endsWith('/')
-        ? Config.baseApiUrl.substring(0, Config.baseApiUrl.length - 1)
-        : Config.baseApiUrl;
-    return '$base/api/v1/user/profile/$slug/';
+    return '$base/profile/$id';
   }
 
   @override
@@ -61,19 +65,10 @@ class ShareProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Profile link',
+                  const Text('App link',
                       style:
                           TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  const Text('Web link (fallback)',
-                      style:
-                          TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
-                  Text(
-                    webLink,
-                    style: const TextStyle(fontSize: 12, color: Colors.black54),
-                  ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
@@ -85,6 +80,15 @@ class ShareProfileScreen extends StatelessWidget {
                       style:
                           const TextStyle(fontSize: 14, color: Colors.black87),
                     ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('Share link (open in browser)',
+                      style:
+                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text(
+                    webLink,
+                    style: const TextStyle(fontSize: 13, color: Colors.blue),
                   ),
                 ],
               ),
@@ -99,7 +103,7 @@ class ShareProfileScreen extends StatelessWidget {
                 children: [
                   AccentButton(
                       onPressed: () async {
-                        await Clipboard.setData(ClipboardData(text: link));
+                        await Clipboard.setData(ClipboardData(text: webLink));
                         notifications.showSuccess('Profile link copied');
                       },
                       child: const Row(
@@ -113,16 +117,16 @@ class ShareProfileScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   AccentButton(
                       onPressed: () async {
-                        await Clipboard.setData(ClipboardData(text: link));
-                        notifications.showSuccess(
-                            'Link copied. Paste it into any app to share.');
+                        await SharePlus.instance.share(
+                          ShareParams(text: 'Check out my profile on Coonch: $webLink'),
+                        );
                       },
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.share),
                           SizedBox(width: 8),
-                          Text('Copy & share')
+                          Text('Share profile')
                         ],
                       )),
                 ],
@@ -147,7 +151,7 @@ class ShareProfileScreen extends StatelessWidget {
                   ],
                 ),
                 child: QrImageView(
-                  data: link,
+                  data: webLink,
                   version: QrVersions.auto,
                   size: 164,
                   gapless: true,

@@ -49,7 +49,7 @@ class _SignUpStep3State extends State<SignUpStep3> {
                   maxWidth: isWide ? 980 : double.infinity,
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 0),
+                  padding: const EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

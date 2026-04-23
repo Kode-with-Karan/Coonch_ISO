@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../services/playlist_service.dart';
 import 'create_playlist_screen.dart';
@@ -209,12 +209,25 @@ class _PlaylistsScreenState extends State<PlaylistsScreen> {
                                         ),
                                       ),
                                       const SizedBox(height: 6),
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(right: 12),
-                                        child: Text('See more',
-                                            style: TextStyle(
-                                                color: Colors.lightBlue[700])),
+                                      GestureDetector(
+                                        onTap: () async {
+                                          await Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  PlaylistDetailScreen(
+                                                      playlist: item),
+                                            ),
+                                          );
+                                          if (mounted) _load();
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                              right: 12, top: 4, bottom: 4),
+                                          child: Text('See more',
+                                              style: TextStyle(
+                                                  color:
+                                                      Colors.lightBlue[700])),
+                                        ),
                                       ),
                                     ],
                                   ),

@@ -581,6 +581,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   .toString(),
                               'Following', onTap: () async {
                             if (viewedId != null) {
+                              final followingCount = int.tryParse(
+                                    (user['following_count'] ??
+                                            user['followings'] ??
+                                            0)
+                                        .toString()) ??
+                                  0;
+                              if (followingCount == 0) return;
                               final changed = await Navigator.of(context)
                                   .push(MaterialPageRoute(builder: (_) {
                                 return FollowingScreen(

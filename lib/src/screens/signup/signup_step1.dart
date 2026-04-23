@@ -114,7 +114,7 @@ class _SignUpStep1State extends State<SignUpStep1> {
       body: SafeArea(
         child: SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(
